@@ -1,0 +1,60 @@
+/* SmartGym design tokens.
+   Paleta UCACUE PROVISIONAL (AGENTS.md §4): ningún HEX está confirmado como
+   color oficial de la Universidad Católica de Cuenca. */
+:root {
+  /* Marca provisional */
+  --sg-crimson-900: #8f1727;
+  --sg-crimson-800: #a81b2d;
+  --sg-crimson-700: #c61f35;
+  --sg-crimson-600: #d9384a;
+  --sg-crimson-100: #fbe8eb;
+  --sg-crimson-50: #fff7f8;
+
+  /* Neutros institucionales */
+  --sg-ink-950: #131416;
+  --sg-ink-900: #1b1c1f;
+  --sg-ink-800: #292b2f;
+  --sg-ink-700: #41444a;
+  --sg-ink-600: #646770;
+  --sg-silver-500: #9b9da3;
+  --sg-silver-300: #d0d2d6;
+  --sg-silver-200: #e1e2e5;
+  --sg-paper-50: #fbfaf8;
+  --sg-paper-100: #f5f3f0;
+  --sg-paper-200: #ece8e4;
+
+  /* Semánticos */
+  --sg-success-800: #12664f;
+  --sg-success-700: #197a60;
+  --sg-success-100: #e6f5ef;
+  --sg-warning-800: #8e4a05;
+  --sg-warning-700: #af610c;
+  --sg-warning-100: #fff3e4;
+  --sg-danger-800: #971b1d;
+  --sg-danger-700: #b42318;
+  --sg-danger-100: #fdebec;
+  --sg-info-800: #174c7b;
+  --sg-info-700: #23669f;
+  --sg-info-100: #eaf3fc;
+
+  /* Geometría y elevación */
+  --sg-radius-sm: 8px;
+  --sg-radius-md: 12px;
+  --sg-radius-lg: 18px;
+  --sg-shadow-sm: 0 1px 2px rgb(19 20 22 / 6%);
+  --sg-shadow-md: 0 10px 28px rgb(19 20 22 / 10%);
+
+  /* Tipografía: una sola familia (Archivo Variable), pesos y anchos como voz */
+  --sg-font: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Layout del shell */
+  --sg-sidenav-width: 256px;
+  --sg-topbar-height: 60px;
+  --sg-main-max-width: 1520px;
+
+  /* Movimiento */
+  --sg-motion-fast: 120ms;
+  --sg-motion-base: 180ms;
+  --sg-motion-slow: 240ms;
+  --sg-ease-product: cubic-bezier(0.16, 1, 0.3, 1);
+}

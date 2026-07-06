@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Símbolo SmartGym">
+  <!-- Escudo geométrico plano -->
+  <path d="M32 4 L56 12 V32 C56 46 46 56 32 60 C18 56 8 46 8 32 V12 Z" fill="#C61F35"/>
+  <!-- Aro de manilla / punto de acceso -->
+  <circle cx="26" cy="34" r="7" stroke="#FBFAF8" stroke-width="3.5" fill="none"/>
+  <!-- Onda NFC (arcos concéntricos) -->
+  <path d="M36 24 A14 14 0 0 1 40 34 A14 14 0 0 1 36 44" stroke="#FBFAF8" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <path d="M42 19 A21 21 0 0 1 48 34 A21 21 0 0 1 42 49" stroke="#D0D2D6" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+</svg>

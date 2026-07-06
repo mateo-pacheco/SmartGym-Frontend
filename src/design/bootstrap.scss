@@ -1,0 +1,28 @@
+/* Bootstrap adaptado a la identidad SmartGym (paleta UCACUE provisional). */
+@use 'bootstrap/scss/bootstrap' with (
+  $primary: #c61f35,
+  $secondary: #646770,
+  $success: #197a60,
+  $warning: #af610c,
+  $danger: #b42318,
+  $info: #23669f,
+  $font-family-sans-serif: (
+    'Archivo Variable',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif
+  ),
+  $font-size-base: 0.9688rem,
+  $line-height-base: 1.5,
+  $headings-font-weight: 650,
+  $border-radius: 0.5rem,
+  $border-radius-sm: 0.375rem,
+  $border-radius-lg: 0.75rem,
+  $enable-shadows: false,
+  $enable-gradients: false,
+  $btn-font-weight: 600,
+  $btn-focus-width: 0,
+  $modal-content-border-radius: 0.75rem,
+  $offcanvas-border-width: 0
+);

@@ -1,0 +1,50 @@
+/* Temas semánticos separados (no inversión automática). AGENTS.md §4. */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --sg-canvas: #fbfaf8;
+  --sg-surface: #ffffff;
+  --sg-surface-raised: #f5f3f0;
+  --sg-surface-inset: #f0edea;
+  --sg-border: #e2deda;
+  --sg-border-strong: #cfc8c2;
+  --sg-text-primary: #1b1c1f;
+  --sg-text-secondary: #5e6067;
+  --sg-text-muted: #81838a;
+  --sg-focus: #23669f;
+  --sg-brand: var(--sg-crimson-700);
+  --sg-brand-strong: var(--sg-crimson-800);
+  --sg-brand-soft: var(--sg-crimson-100);
+  --sg-nav-active-bg: #f8e9eb;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --sg-canvas: #151416;
+  --sg-surface: #1d1b1e;
+  --sg-surface-raised: #282427;
+  --sg-surface-inset: #121113;
+  --sg-border: #3d383c;
+  --sg-border-strong: #564e53;
+  --sg-text-primary: #f8f6f4;
+  --sg-text-secondary: #d1cac8;
+  --sg-text-muted: #9a9092;
+  --sg-focus: #8cbce7;
+  --sg-crimson-700: #d84a59;
+  --sg-crimson-600: #e45b68;
+  --sg-crimson-100: #3a1d22;
+  --sg-success-700: #45b98a;
+  --sg-success-100: #183d30;
+  --sg-warning-700: #e1a448;
+  --sg-warning-100: #4a3417;
+  --sg-danger-700: #f1797e;
+  --sg-danger-100: #4a1f23;
+  --sg-info-700: #7fb3e4;
+  --sg-info-100: #1d3852;
+  --sg-brand: var(--sg-crimson-700);
+  --sg-brand-strong: var(--sg-crimson-600);
+  --sg-brand-soft: var(--sg-crimson-100);
+  --sg-nav-active-bg: #35262a;
+  --sg-shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+  --sg-shadow-md: 0 10px 28px rgb(0 0 0 / 42%);
+}
