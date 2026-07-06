@@ -3,24 +3,15 @@ import { Link } from 'react-router-dom'
 import Form from 'react-bootstrap/Form'
 import { gsap } from '../../lib/gsap'
 import { AppButton } from '../../components/actions/AppButton'
-import { ContourField } from '../../components/visual/ContourField'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { Icon } from '../../components/icons/Icon'
 import brandMark from '../../assets/brand/smartgym-mark.svg'
+import piscinaUcacue from '../../assets/images/piscina-ucacue.jpg'
 import './ingresar.scss'
 
 /* Página de acceso. Honestidad de integración: el contrato de autenticación
    no existe todavía, así que el envío lo declara y ofrece el modo desarrollo.
    Entrada coreografiada suave (stagger corto), reduced-motion respetado. */
-
-const VISUAL_URL =
-  'https://images.unsplash.com/photo-1560281105-d58d81dfc5bc?auto=format&fit=crop&w=1400&q=70'
-const VISUAL_SRCSET = [900, 1400, 2000]
-  .map(
-    (w) =>
-      `https://images.unsplash.com/photo-1560281105-d58d81dfc5bc?auto=format&fit=crop&w=${w}&q=70 ${w}w`,
-  )
-  .join(', ')
 
 interface Campos {
   correo: string
@@ -80,7 +71,6 @@ export default function IngresarPage() {
   return (
     <div ref={pageRef} className="ingresar">
       <div className="ingresar__form-col">
-        <ContourField />
         <Link to="/inicio" className="ingresar__brand">
           <img src={brandMark} alt="" width="30" height="30" />
           SmartGym
@@ -161,15 +151,13 @@ export default function IngresarPage() {
 
       <div className="ingresar__visual" aria-hidden="true">
         <img
-          src={VISUAL_URL}
-          srcSet={VISUAL_SRCSET}
-          sizes="(min-width: 992px) 55vw, 0px"
+          src={piscinaUcacue}
           alt=""
-          width="1400"
-          height="933"
+          width="1440"
+          height="903"
           loading="lazy"
+          decoding="async"
         />
-        <ContourField tone="inverse" />
         <div className="ingresar__visual-caption">
           <span
             className="d-inline-flex align-items-center gap-2 mb-2"
@@ -177,9 +165,9 @@ export default function IngresarPage() {
           >
             <Icon name="pulso" size={16} />
           </span>
-          <strong>Campus deportivo UCACUE</strong>
+          <strong>Escuela Nacional del Deporte</strong>
           <span>
-            Acceso, salud y telemetría del gimnasio universitario operando como un solo sistema
+            Acceso, salud y telemetría del campus deportivo UCACUE operando como un solo sistema
             trazable.
           </span>
         </div>

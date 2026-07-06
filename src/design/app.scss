@@ -273,6 +273,15 @@ p {
   .sg-btn:hover {
     transform: translateY(-1px);
   }
+
+  /* La flecha final del botón avanza 2px al pasar el cursor. */
+  .sg-btn svg:last-child:not(:first-child) {
+    transition: transform 140ms var(--sg-ease-product);
+  }
+
+  .sg-btn:hover svg:last-child:not(:first-child) {
+    transform: translateX(2px);
+  }
 }
 
 .sg-btn:active {
@@ -542,7 +551,7 @@ p {
 
 .sg-filterbar .form-control,
 .sg-filterbar .form-select {
-  background: var(--sg-surface);
+  background-color: var(--sg-surface);
   border-color: var(--sg-border-strong);
   color: var(--sg-text-primary);
   min-height: 40px;

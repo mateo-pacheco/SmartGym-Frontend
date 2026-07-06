@@ -5,27 +5,15 @@ import { AppButton } from '../../components/actions/AppButton'
 import { ThemeToggle } from '../../components/navigation/ThemeToggle'
 import { SkipToContent } from '../../components/navigation/SkipToContent'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
-import { ContourField } from '../../components/visual/ContourField'
 import { Icon, type IconName } from '../../components/icons/Icon'
-import { HeroFacility } from './HeroFacility'
 import { EcosystemLoop } from './EcosystemLoop'
 import { ModuleVisual, type ModuleVisualName } from './ModuleVisuals'
 import brandMark from '../../assets/brand/smartgym-mark.svg'
+import piscinaUcacue from '../../assets/images/piscina-ucacue.jpg'
 import './inicio.scss'
 
-/* Fotografías verificadas (licencia Unsplash, hotlink oficial): sin rostros
-   identificables, sin logos, sin pantallas legibles. Créditos en
-   docs/frontend-assets-manifest.md. */
-const CAMPUS_URL =
-  'https://images.unsplash.com/photo-1557149622-823cf0c28758?auto=format&fit=crop&w=1600&q=70'
-const CAMPUS_SRCSET = [800, 1400, 2000]
-  .map(
-    (w) =>
-      `https://images.unsplash.com/photo-1557149622-823cf0c28758?auto=format&fit=crop&w=${w}&q=70 ${w}w`,
-  )
-  .join(', ')
-const CIERRE_URL =
-  'https://images.unsplash.com/photo-1518609875317-99d279eb2501?auto=format&fit=crop&w=1600&q=60'
+/* Fotografía institucional autorizada, aportada por el propio proyecto:
+   piscina de la Escuela Nacional del Deporte (UCACUE). Ver manifiesto. */
 
 interface FeaturedModule {
   visual: ModuleVisualName
@@ -205,13 +193,16 @@ export default function InicioPage() {
           mobile: boolean
           fine: boolean
         }
+        const foto = page.querySelector<HTMLElement>('.inicio-hero__media img')
 
-        /* Intro del hero. Siempre fromTo + clearProps al terminar, para que
-           ningún estado inicial invisible pueda quedarse pegado (revisión #1). */
+        /* Intro del hero: fromTo + clearProps para que nada quede invisible. */
         if (desktop) {
           const intro = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.5 } })
+          if (foto) {
+            intro.fromTo(foto, { scale: 1.12, autoAlpha: 0.4 }, { scale: 1.06, autoAlpha: 1, duration: 1.1, ease: 'power2.out' })
+          }
           intro
-            .fromTo('.inicio-hero__inst', { y: 12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4 })
+            .fromTo('.inicio-hero__inst', { y: 12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4 }, '-=0.8')
             .fromTo(
               '.inicio-hero__title .line',
               { y: 30, autoAlpha: 0 },
@@ -225,25 +216,18 @@ export default function InicioPage() {
               { y: 0, autoAlpha: 1, stagger: 0.06, duration: 0.35 },
               '-=0.3',
             )
-            .fromTo(
-              '.inicio-hero__art',
-              { y: 20, autoAlpha: 0 },
-              { y: 0, autoAlpha: 1, duration: 0.6 },
-              '-=0.45',
-            )
           intro.eventCallback('onComplete', () => {
             gsap.set(
               page.querySelectorAll(
-                '.inicio-hero__inst, .inicio-hero__title .line, .inicio-hero__lead, .inicio-hero__ctas > *, .inicio-hero__art',
+                '.inicio-hero__inst, .inicio-hero__title .line, .inicio-hero__lead, .inicio-hero__ctas > *',
               ),
               { clearProps: 'all' },
             )
           })
         }
         if (mobile) {
-          // Móvil: una sola pasada corta; el contenido nunca espera coreografía.
           gsap.fromTo(
-            '.inicio-hero > *',
+            '.inicio-hero__copy > *',
             { y: 12, autoAlpha: 0 },
             {
               y: 0,
@@ -252,57 +236,35 @@ export default function InicioPage() {
               duration: 0.35,
               ease: 'power2.out',
               onComplete: () => {
-                gsap.set(page.querySelectorAll('.inicio-hero > *'), { clearProps: 'all' })
+                gsap.set(page.querySelectorAll('.inicio-hero__copy > *'), { clearProps: 'all' })
               },
             },
           )
         }
 
-        if (desktop) {
-          // Profundidad leve del arte del hero al hacer scroll (solo transform).
-          const capas: Array<[string, number]> = [
-            ['.hero-l1', -3],
-            ['.hero-l2', -7],
-            ['.hero-l3', -12],
-          ]
-          capas.forEach(([sel, y]) => {
-            gsap.to(sel, {
-              yPercent: y,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: '.inicio-hero',
-                start: 'top top',
-                end: 'bottom top',
-                scrub: 0.5,
-              },
-            })
+        /* La foto respira con el scroll (solo transform). */
+        if (desktop && foto) {
+          gsap.to(foto, {
+            yPercent: 7,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: '.inicio-hero',
+              start: 'top top',
+              end: 'bottom top',
+              scrub: 0.5,
+            },
           })
         }
 
-        if (fine) {
-          /* Parallax de cursor: el puntero desplaza contornos y capas del arte
-             (adaptación del principio de landonorris.com, implementación propia). */
-          const capas = [
-            { el: page.querySelector('.inicio-hero .contour-a'), fx: -14, fy: -10 },
-            { el: page.querySelector('.inicio-hero .contour-b'), fx: 10, fy: 8 },
-            { el: page.querySelector('.hero-l1'), fx: 5, fy: 4 },
-            { el: page.querySelector('.hero-l2'), fx: 10, fy: 7 },
-            { el: page.querySelector('.hero-l3'), fx: 16, fy: 12 },
-          ]
-            .filter((c) => c.el)
-            .map((c) => ({
-              fx: c.fx,
-              fy: c.fy,
-              xTo: gsap.quickTo(c.el, 'x', { duration: 0.9, ease: 'power3.out' }),
-              yTo: gsap.quickTo(c.el, 'y', { duration: 0.9, ease: 'power3.out' }),
-            }))
+        /* Parallax de cursor sobre la fotografía del hero: deriva sutil. */
+        if (fine && foto) {
+          const xTo = gsap.quickTo(foto, 'x', { duration: 1, ease: 'power3.out' })
+          const yTo = gsap.quickTo(foto, 'y', { duration: 1, ease: 'power3.out' })
           const onMove = (e: PointerEvent) => {
             const nx = e.clientX / window.innerWidth - 0.5
             const ny = e.clientY / window.innerHeight - 0.5
-            capas.forEach((c) => {
-              c.xTo(nx * c.fx)
-              c.yTo(ny * c.fy)
-            })
+            xTo(nx * -14)
+            yTo(ny * -8)
           }
           window.addEventListener('pointermove', onMove, { passive: true })
           return () => window.removeEventListener('pointermove', onMove)
@@ -311,7 +273,7 @@ export default function InicioPage() {
     )
 
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      // Revelado editorial corto por sección: opacity + translateY, una vez.
+      // Revelado editorial por sección (elementos sueltos).
       gsap.utils.toArray<HTMLElement>('[data-reveal]', page).forEach((el) => {
         gsap.from(el, {
           y: 18,
@@ -323,24 +285,18 @@ export default function InicioPage() {
         })
       })
 
-      // La foto del campus se descubre con clip-path ligado al scroll.
-      const foto = page.querySelector('.campus-band__media')
-      if (foto) {
-        gsap.fromTo(
-          foto,
-          { clipPath: 'inset(10% 6% 10% 6% round 18px)' },
-          {
-            clipPath: 'inset(0% 0% 0% 0% round 18px)',
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: '.campus-band',
-              start: 'top 80%',
-              end: 'top 30%',
-              scrub: 0.6,
-            },
-          },
-        )
-      }
+      // Grupos con stagger: cada hijo entra en cascada corta.
+      gsap.utils.toArray<HTMLElement>('[data-reveal-group]', page).forEach((group) => {
+        gsap.from(group.children, {
+          y: 20,
+          autoAlpha: 0,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: 'power3.out',
+          overwrite: 'auto',
+          scrollTrigger: { trigger: group, start: 'top 90%', once: true },
+        })
+      })
 
       // Recalcular posiciones cuando la tipografía termina de cargar.
       document.fonts?.ready.then(() => ScrollTrigger.refresh()).catch(() => {})
@@ -377,9 +333,18 @@ export default function InicioPage() {
       </header>
 
       <main id="contenido-principal">
-        {/* ---------- Hero ---------- */}
+        {/* ---------- Hero: fotografía institucional degradada en todo el top ---------- */}
         <section className="inicio-hero" aria-labelledby="hero-titulo">
-          <ContourField />
+          <div className="inicio-hero__media" aria-hidden="true">
+            <img
+              src={piscinaUcacue}
+              alt=""
+              width="1440"
+              height="903"
+              loading="eager"
+              decoding="async"
+            />
+          </div>
           <div className="inicio-hero__copy">
             <p className="inicio-hero__inst">Universidad Católica de Cuenca</p>
             <h1 id="hero-titulo" className="inicio__display inicio-hero__title">
@@ -400,9 +365,6 @@ export default function InicioPage() {
                 Explorar módulos
               </a>
             </div>
-          </div>
-          <div className="inicio-hero__art">
-            <HeroFacility />
           </div>
           <div className="inicio-scrollcue" aria-hidden="true" />
         </section>
@@ -446,7 +408,7 @@ export default function InicioPage() {
               </article>
             ))}
 
-            <ul className="mod-index" data-reveal>
+            <ul className="mod-index" data-reveal-group>
               {INDEX_MODULES.map((mod) => (
                 <li key={mod.name}>
                   <span>
@@ -464,37 +426,8 @@ export default function InicioPage() {
           </div>
         </section>
 
-        {/* ---------- Campus ---------- */}
-        <section className="inicio-section campus-band" aria-labelledby="campus-titulo">
-          <div className="inicio-section__inner">
-            <div data-reveal>
-              <h2 id="campus-titulo">Pensado para el deporte universitario real</h2>
-              <p className="inicio-section__lead">
-                SmartGym opera instalaciones vivas: pistas, salas de fuerza y estudios XR con
-                personas entrenando todos los días.
-              </p>
-            </div>
-            <figure className="campus-band__figure" data-reveal>
-              <img
-                className="campus-band__media"
-                src={CAMPUS_URL}
-                srcSet={CAMPUS_SRCSET}
-                sizes="(min-width: 1280px) 1216px, 94vw"
-                width="1600"
-                height="1066"
-                loading="lazy"
-                alt="Vista aérea de una pista de atletismo y campos deportivos universitarios en plena actividad"
-              />
-              <figcaption>
-                Infraestructura deportiva universitaria: el territorio que SmartGym conecta con
-                acceso, salud y telemetría.
-              </figcaption>
-            </figure>
-          </div>
-        </section>
-
         {/* ---------- Flujos críticos ---------- */}
-        <section id="flujos" className="inicio-section" aria-labelledby="flujos-titulo">
+        <section id="flujos" className="inicio-section inicio-section--tinted" aria-labelledby="flujos-titulo">
           <div className="inicio-section__inner">
             <div data-reveal>
               <h2 id="flujos-titulo">Tres flujos críticos, tres interacciones</h2>
@@ -503,9 +436,9 @@ export default function InicioPage() {
                 están diseñados para resolverse en tres pasos como máximo.
               </p>
             </div>
-            <div className="flujos-grid">
+            <div className="flujos-grid" data-reveal-group>
               {FLUJOS.map((flujo) => (
-                <article key={flujo.title} className="flujo" data-reveal>
+                <article key={flujo.title} className="flujo">
                   <span className="flujo__icon">
                     <Icon name={flujo.icon} size={22} />
                   </span>
@@ -537,25 +470,23 @@ export default function InicioPage() {
                 <StatusBadge tone="warning" label="Contrato API no confirmado" />
                 <StatusBadge tone="neutral" label="Sin datos simulados" icon="check" />
               </div>
-              <div className="inicio-console__grid">
+              <div className="inicio-console__grid" data-reveal-group>
                 {['Accesos NFC hoy', 'Gateways en línea', 'Alertas activas', 'Aforo por zona'].map(
                   (label) => (
                     <div key={label} className="inicio-console__cell">
                       <h3>{label}</h3>
                       <span className="inicio-console__value">N/D</span>
-                      <span style={{ fontSize: '0.8rem', color: '#8f929a' }}>
-                        Sin datos disponibles
-                      </span>
+                      <span className="inicio-console__hint">Sin datos disponibles</span>
                     </div>
                   ),
                 )}
-                <div className="inicio-console__trace">
-                  <p>
-                    Trazabilidad: cuando el backend publique sus contratos, esta consola mostrará
-                    accesos, sincronizaciones y alertas en tiempo real, con su equivalente textual
-                    accesible.
-                  </p>
-                </div>
+              </div>
+              <div className="inicio-console__trace">
+                <p>
+                  Trazabilidad: cuando el backend publique sus contratos, esta consola mostrará
+                  accesos, sincronizaciones y alertas en tiempo real, con su equivalente textual
+                  accesible.
+                </p>
               </div>
             </div>
           </div>
@@ -563,13 +494,15 @@ export default function InicioPage() {
 
         {/* ---------- Seguridad y privacidad ---------- */}
         <section id="seguridad" className="inicio-section" aria-labelledby="seguridad-titulo">
-          <div className="inicio-section__inner" data-reveal>
-            <h2 id="seguridad-titulo">Seguridad institucional, no candados decorativos</h2>
-            <p className="inicio-section__lead">
-              SmartGym maneja datos de salud y credenciales de acceso. Estas son las reglas que la
-              interfaz cumple en todos los módulos.
-            </p>
-            <ul className="inicio-seguridad__list">
+          <div className="inicio-section__inner">
+            <div data-reveal>
+              <h2 id="seguridad-titulo">Seguridad institucional, no candados decorativos</h2>
+              <p className="inicio-section__lead">
+                SmartGym maneja datos de salud y credenciales de acceso. Estas son las reglas que la
+                interfaz cumple en todos los módulos.
+              </p>
+            </div>
+            <ul className="inicio-seguridad__list" data-reveal-group>
               {SEGURIDAD.map((item) => (
                 <li key={item.term}>
                   <span className="inicio-seguridad__term">{item.term}</span>
@@ -582,15 +515,6 @@ export default function InicioPage() {
 
         {/* ---------- Cierre ---------- */}
         <section className="inicio-section inicio-cierre" aria-labelledby="cierre-titulo">
-          <img
-            className="inicio-cierre__foto"
-            src={CIERRE_URL}
-            width="1600"
-            height="1067"
-            loading="lazy"
-            alt=""
-          />
-          <ContourField tone="inverse" />
           <div className="inicio-section__inner inicio-cierre__content" data-reveal>
             <h2 id="cierre-titulo" className="inicio__display">
               Acceder a SmartGym

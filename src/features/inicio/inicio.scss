@@ -1,6 +1,7 @@
 /* /inicio — experiencia editorial SmartGym.
-   Registro brand (PRODUCT.md): scroll storytelling, crimson comprometido,
-   una sola familia tipográfica con contraste de peso y anchura. */
+   Registro brand (PRODUCT.md): fotografía institucional protagonista,
+   degradados suaves dentro de la paleta, crimson comprometido, una sola
+   familia tipográfica con contraste de peso y anchura. */
 
 .inicio {
   background: var(--sg-canvas);
@@ -71,78 +72,65 @@
   background: var(--sg-surface-raised);
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero fotográfico ----------
+   La piscina de la Escuela Nacional del Deporte ocupa todo el top y se
+   degrada hacia el canvas por la izquierda y hacia abajo, dejando una zona
+   limpia para el titular. */
 .inicio-hero {
   position: relative;
   overflow: hidden;
-  /* Más compacto: la siguiente sección asoma en el primer viewport (revisión #9). */
-  min-height: min(calc(88dvh - 68px), 820px);
+  min-height: min(calc(92dvh - 68px), 860px);
   display: grid;
   align-items: center;
-  gap: clamp(20px, 4vw, 64px);
-  padding: clamp(28px, 4.5vh, 56px) clamp(20px, 4vw, 56px) clamp(40px, 7vh, 80px);
-  /* Lavado de color editorial: crimson arriba-derecha, neutro abajo-izquierda. */
+  padding: clamp(28px, 5vh, 64px) clamp(20px, 4vw, 56px) clamp(48px, 8vh, 88px);
+}
+
+.inicio-hero__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.inicio-hero__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 82% 42%;
+  transform: scale(1.06);
+  will-change: transform;
+}
+
+/* Scrim editorial: zona limpia para el titular a la izquierda, fotografía
+   nítida a la derecha, y fusión con el canvas arriba y abajo. */
+.inicio-hero__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(
-      56% 46% at 84% 4%,
-      color-mix(in srgb, var(--sg-brand) 9%, transparent),
-      transparent 72%
+    linear-gradient(
+      90deg,
+      var(--sg-canvas) 34%,
+      color-mix(in srgb, var(--sg-canvas) 86%, transparent) 48%,
+      color-mix(in srgb, var(--sg-canvas) 38%, transparent) 60%,
+      transparent 74%
     ),
-    radial-gradient(
-      42% 38% at 4% 96%,
-      color-mix(in srgb, var(--sg-ink-600) 8%, transparent),
-      transparent 70%
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sg-canvas) 38%, transparent) 0%,
+      transparent 14%,
+      transparent 70%,
+      var(--sg-canvas) 98%
     );
+}
+
+[data-theme='dark'] .inicio-hero__media img {
+  filter: brightness(0.82) saturate(0.92);
 }
 
 .inicio-hero__copy {
   position: relative;
-  max-width: 1560px;
-}
-
-.inicio-hero__art {
-  position: relative;
-}
-
-@media (min-width: 992px) {
-  .inicio-hero {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    max-width: 1560px;
-    margin-inline: auto;
-  }
-}
-
-/* Móvil: una señal visual del arte aparece antes del texto (revisión #3),
-   con el hero compactado para que los CTAs entren en el primer viewport. */
-@media (max-width: 991.98px) {
-  .inicio-hero {
-    padding-top: 18px;
-    gap: 16px;
-    align-content: start;
-  }
-
-  .inicio-hero__art {
-    order: -1;
-    max-height: 148px;
-    overflow: hidden;
-  }
-
-  .inicio-hero__art svg {
-    margin-top: -6%;
-  }
-
-  .inicio-hero__title {
-    font-size: clamp(2.35rem, 9vw, 2.9rem);
-    margin-bottom: 14px;
-  }
-
-  .inicio-hero__inst {
-    margin-bottom: 12px;
-  }
-
-  .inicio-hero__lead {
-    margin-bottom: 22px;
-  }
+  z-index: 1;
+  max-width: 620px;
 }
 
 .inicio-hero__inst {
@@ -150,7 +138,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--sg-text-muted);
+  color: var(--sg-text-secondary);
   margin-bottom: 18px;
 }
 
@@ -180,15 +168,37 @@
   gap: 12px;
 }
 
-.inicio-hero__art svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
+/* Móvil: la fotografía corona el top y el texto respira sobre canvas. */
+@media (max-width: 991.98px) {
+  .inicio-hero {
+    align-items: end;
+    min-height: min(92dvh, 780px);
+    padding-top: 29vh;
+    padding-bottom: 36px;
+  }
 
-@media (min-width: 992px) {
-  .inicio-hero__art {
-    min-height: 320px;
+  .inicio-hero__media::after {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sg-canvas) 30%, transparent) 0%,
+        transparent 14%,
+        color-mix(in srgb, var(--sg-canvas) 62%, transparent) 34%,
+        var(--sg-canvas) 52%
+      );
+  }
+
+  .inicio-hero__title {
+    font-size: clamp(2.05rem, 8.4vw, 2.7rem);
+    margin-bottom: 12px;
+  }
+
+  .inicio-hero__inst {
+    margin-bottom: 10px;
+  }
+
+  .inicio-hero__lead {
+    margin-bottom: 22px;
   }
 }
 
@@ -201,6 +211,7 @@
   height: 44px;
   background: var(--sg-border-strong);
   overflow: hidden;
+  z-index: 1;
 }
 
 .inicio-scrollcue::after {
@@ -231,6 +242,17 @@
 /* ---------- Secciones ---------- */
 .inicio-section {
   padding: clamp(64px, 11vh, 128px) clamp(20px, 4vw, 56px);
+}
+
+/* Banda tintada: transición suave canvas → superficie → canvas. */
+.inicio-section--tinted {
+  background: linear-gradient(
+    180deg,
+    var(--sg-canvas) 0%,
+    var(--sg-surface-raised) 16%,
+    var(--sg-surface-raised) 84%,
+    var(--sg-canvas) 100%
+  );
 }
 
 .inicio-section__inner {
@@ -273,6 +295,12 @@
 @media (min-width: 992px) {
   .loop-stage {
     grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .loop-stage {
+    min-height: 0;
   }
 }
 
@@ -483,6 +511,16 @@
   border: 1px solid var(--sg-border);
   border-radius: var(--sg-radius-lg);
   padding: clamp(18px, 3vw, 32px);
+  transition:
+    transform var(--sg-motion-base) var(--sg-ease-product),
+    border-color var(--sg-motion-base) var(--sg-ease-product);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mod-row__visual:hover {
+    transform: translateY(-4px);
+    border-color: var(--sg-border-strong);
+  }
 }
 
 .mod-row__visual svg {
@@ -541,25 +579,6 @@
 .mod-index a:hover {
   color: var(--sg-brand-strong);
   text-decoration: underline;
-}
-
-/* ---------- Banda fotográfica del campus ---------- */
-.campus-band__figure {
-  margin: 32px 0 0;
-}
-
-.campus-band__media {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: var(--sg-radius-lg);
-}
-
-.campus-band__figure figcaption {
-  margin-top: 12px;
-  font-size: 0.85rem;
-  color: var(--sg-text-muted);
-  max-width: 64ch;
 }
 
 /* ---------- Flujos críticos ---------- */
@@ -651,20 +670,21 @@
   justify-self: start;
 }
 
-/* ---------- Consola operativa ---------- */
+/* ---------- Consola operativa (respeta el tema activo) ---------- */
 .inicio-console {
-  background: var(--sg-ink-950);
-  color: #f2efec;
+  background: var(--sg-surface);
+  color: var(--sg-text-primary);
   border-radius: var(--sg-radius-lg);
   padding: clamp(22px, 4vw, 44px);
-  border: 1px solid #2c2e33;
+  border: 1px solid var(--sg-border);
+  box-shadow: var(--sg-shadow-sm);
 }
 
 .inicio-console__grid {
   display: grid;
   gap: 1px;
-  background: #2c2e33;
-  border: 1px solid #2c2e33;
+  background: var(--sg-border);
+  border: 1px solid var(--sg-border);
   border-radius: var(--sg-radius-md);
   overflow: hidden;
   margin-top: 26px;
@@ -683,7 +703,7 @@
 }
 
 .inicio-console__cell {
-  background: #17181b;
+  background: var(--sg-surface-inset);
   padding: 18px 20px;
   display: grid;
   gap: 8px;
@@ -695,7 +715,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8f929a;
+  color: var(--sg-text-muted);
   margin: 0;
 }
 
@@ -703,20 +723,25 @@
   font-size: 1.5rem;
   font-weight: 720;
   font-variant-numeric: tabular-nums;
-  color: #f2efec;
+  color: var(--sg-text-primary);
+}
+
+.inicio-console__hint {
+  font-size: 0.8rem;
+  color: var(--sg-text-muted);
 }
 
 .inicio-console__trace {
-  margin-top: 1px;
-  background: #17181b;
-  padding: 18px 20px;
-  grid-column: 1 / -1;
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--sg-surface-inset);
+  border-radius: var(--sg-radius-sm);
 }
 
 .inicio-console__trace p {
   margin: 0;
   font-size: 0.88rem;
-  color: #8f929a;
+  color: var(--sg-text-secondary);
 }
 
 /* ---------- Seguridad ---------- */
@@ -754,23 +779,19 @@
   max-width: 62ch;
 }
 
-/* ---------- Cierre ---------- */
+/* ---------- Cierre: bloque crimson con degradado propio ---------- */
 .inicio-cierre {
   position: relative;
   overflow: hidden;
-  background: var(--sg-crimson-900);
   color: #fff7f8;
   text-align: left;
-}
-
-.inicio-cierre__foto {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.28;
-  mix-blend-mode: luminosity;
+  background:
+    radial-gradient(
+      60% 90% at 88% 8%,
+      color-mix(in srgb, #ffffff 10%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(126deg, var(--sg-crimson-800) 0%, var(--sg-crimson-900) 58%, #6f1120 100%);
 }
 
 .inicio-cierre__content {
