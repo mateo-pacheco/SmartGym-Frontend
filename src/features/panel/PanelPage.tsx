@@ -1,4 +1,5 @@
 import { PageHeader } from '../../components/navigation/PageHeader'
+import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { MetricInline } from '../../components/data-display/MetricInline'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
@@ -7,7 +8,7 @@ import { AppButton } from '../../components/actions/AppButton'
 import { getApiConfig } from '../../services/api/client'
 
 /* Centro de control: composición tipo sala de mando. Sin datos inventados;
-   cada indicador declara su estado real de integración. */
+   el estado de integración es la única fuente del mensaje "sin contrato". */
 export default function PanelPage() {
   const api = getApiConfig()
 
@@ -15,30 +16,32 @@ export default function PanelPage() {
     <>
       <PageHeader
         title="Centro de control"
-        lead="Estado operativo del ecosistema SmartGym: accesos, telemetría, alertas y aforo en una sola vista."
+        lead="Accesos, telemetría, alertas y aforo del ecosistema SmartGym en una sola vista."
         breadcrumbs={[{ label: 'SmartGym', to: '/panel' }, { label: 'Centro de control' }]}
       />
 
-      <section aria-label="Indicadores operativos" className="sg-surface p-3 p-md-4 mb-4">
-        <div className="row g-4">
-          <div className="col-6 col-lg-3">
-            <MetricInline label="Accesos NFC hoy" value="N/D" tone="neutral" statusLabel="Sin datos" />
+      <MotionEffect fade slide={{ direction: 'down', offset: 14 }} delay={0.06}>
+        <section aria-label="Indicadores operativos" className="sg-surface p-3 p-md-4 mb-4">
+          <div className="row g-4">
+            {['Accesos NFC hoy', 'Gateways conectados', 'Alertas médicas activas', 'Aforo actual'].map(
+              (label, i) => (
+                <div key={label} className="col-6 col-lg-3">
+                  <MotionEffect fade zoom={{ initialScale: 0.92 }} delay={0.12 + i * 0.05}>
+                    <MetricInline label={label} />
+                  </MotionEffect>
+                </div>
+              ),
+            )}
           </div>
-          <div className="col-6 col-lg-3">
-            <MetricInline label="Gateways conectados" value="N/D" tone="neutral" statusLabel="Sin datos" />
-          </div>
-          <div className="col-6 col-lg-3">
-            <MetricInline label="Alertas médicas activas" value="N/D" tone="neutral" statusLabel="Sin datos" />
-          </div>
-          <div className="col-6 col-lg-3">
-            <MetricInline label="Aforo actual" value="N/D" tone="neutral" statusLabel="Sin datos" />
-          </div>
-        </div>
-      </section>
+          <p className="sg-note sg-note--muted mt-3 mb-0">
+            Los indicadores se activan con los contratos de eventos y telemetría.
+          </p>
+        </section>
+      </MotionEffect>
 
       <div className="row g-4">
         <div className="col-lg-8">
-          <h2 className="fs-6 fw-semibold mb-3">Trazabilidad reciente</h2>
+          <h2 className="sg-section-title">Trazabilidad reciente</h2>
           <DataTable
             caption="Últimos eventos operativos registrados por el sistema"
             columns={[
@@ -51,16 +54,15 @@ export default function PanelPage() {
             emptyState={
               <NoContractState
                 illustration="auditoria"
-                moduleName="La trazabilidad operativa"
-                detail="Aquí aparecerán accesos, sincronizaciones y alertas en orden cronológico."
-                contract="Eventos operativos"
-                expectedAction="seguir en vivo accesos NFC, sincronizaciones IoT y alertas médicas."
+                title="Aún no hay eventos registrados"
+                body="Los accesos, sincronizaciones y alertas aparecerán aquí en orden cronológico."
               />
             }
           />
         </div>
         <div className="col-lg-4">
-          <h2 className="fs-6 fw-semibold mb-3">Estado de integración</h2>
+          <MotionEffect fade slide={{ direction: 'right', offset: 18 }} delay={0.18}>
+          <h2 className="sg-section-title">Estado de integración</h2>
           <div className="sg-surface--inset p-3 d-grid gap-3">
             <dl className="sg-deflist">
               <div>
@@ -84,7 +86,7 @@ export default function PanelPage() {
                 <dd>Desarrollo</dd>
               </div>
             </dl>
-            <p className="m-0" style={{ fontSize: '0.83rem', color: 'var(--sg-text-secondary)' }}>
+            <p className="sg-note">
               Los módulos se activan a medida que el backend confirma sus contratos. Esta pantalla
               no muestra datos simulados.
             </p>
@@ -93,7 +95,7 @@ export default function PanelPage() {
             </AppButton>
           </div>
 
-          <h2 className="fs-6 fw-semibold mb-3 mt-4">Próximos pasos de integración</h2>
+          <h2 className="sg-section-title mt-4">Próximos pasos de integración</h2>
           <ol className="sg-nextsteps sg-surface--inset p-3 m-0">
             {[
               {
@@ -125,6 +127,7 @@ export default function PanelPage() {
               </li>
             ))}
           </ol>
+          </MotionEffect>
         </div>
       </div>
     </>

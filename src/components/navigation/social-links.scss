@@ -1,0 +1,50 @@
+/* Redes sociales UCACUE integradas al ritmo tipográfico del footer.
+   Sin contenedores circulares, rellenos ni tooltips flotantes. */
+
+.sg-social {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.sg-social__item {
+  display: flex;
+}
+
+.sg-social__item a {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--sg-text-muted);
+  text-decoration: none;
+  transition:
+    color 0.18s var(--sg-ease-product),
+    transform 0.18s var(--sg-ease-product);
+}
+
+.sg-social__item a svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sg-social__item a:hover,
+.sg-social__item a:focus-visible {
+  color: var(--sg-brand);
+  transform: translateY(-2px);
+}
+
+.sg-social__item a:focus-visible {
+  outline: 2px solid var(--sg-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-social__item a {
+    transition: none;
+  }
+}

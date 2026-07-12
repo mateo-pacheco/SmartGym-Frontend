@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { SkipToContent } from '../../components/navigation/SkipToContent'
+import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { MobileNav } from './MobileNav'
 import { SideNav } from './SideNav'
 import { TopBar } from './TopBar'
 
 /* Shell persistente: SideNav y TopBar permanecen montados entre rutas.
-   Solo el contenido del Outlet transiciona (opacity + translateY ≤180ms). */
+   El contenido del Outlet entra con un fade breve (MotionEffect de
+   Animate UI); la cascada fina la hacen los bloques internos. */
 export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
   const { pathname } = useLocation()
@@ -20,9 +22,13 @@ export function AppShell() {
           <TopBar onOpenNav={() => setNavOpen(true)} />
           <main id="contenido-principal" className="sg-main flex-grow-1">
             {/* La key vive en el contenido, nunca en el layout. */}
-            <div key={pathname} className="sg-route-enter">
+            <MotionEffect
+              key={pathname}
+              fade
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
               <Outlet />
-            </div>
+            </MotionEffect>
           </main>
         </div>
       </div>

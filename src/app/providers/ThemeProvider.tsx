@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { flushSync } from 'react-dom'
 import type { ReactNode } from 'react'
 import { ThemeContext, type Theme } from './theme-context'
 
@@ -20,7 +21,33 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme])
 
   const toggleTheme = useCallback(() => {
-    setTheme((t) => (t === 'light' ? 'dark' : 'light'))
+    const root = document.documentElement
+    const change = () => {
+      flushSync(() => {
+        setTheme((t) => {
+          const next = t === 'light' ? 'dark' : 'light'
+          root.setAttribute('data-theme', next)
+          return next
+        })
+      })
+    }
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce) {
+      change()
+      return
+    }
+
+    if (typeof document.startViewTransition === 'function') {
+      // Crossfade nativo entre el snapshot del tema saliente y el entrante.
+      document.startViewTransition(change)
+      return
+    }
+
+    // Fallback: transición de colores acotada mientras cambia el atributo.
+    root.classList.add('sg-theme-anim')
+    change()
+    window.setTimeout(() => root.classList.remove('sg-theme-anim'), 420)
   }, [])
 
   const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme])

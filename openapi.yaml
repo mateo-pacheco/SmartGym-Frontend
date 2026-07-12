@@ -1,0 +1,4795 @@
+openapi: "3.0.3"
+info:
+  title: SmartGym API
+  description: |
+    API REST del sistema SmartGym para la gestión integral de gimnasios.
+  version: "1.0.0"
+  contact:
+    name: SmartGym Team
+
+servers:
+  - url: http://localhost:8080
+    description: Desarrollo local
+
+paths:
+  /api/v1/manillas-nfc:
+    post:
+      tags:
+        - Manillas NFC
+      summary: Registrar manilla NFC
+      description: "Rol: ADMINISTRADOR. Persiste solo HMAC y mÃ¡scara segura; nunca cÃ³digo NFC real."
+      operationId: registrarManillaNfc
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarManillaNfcRequestDTO'
+      responses:
+        '201':
+          description: Manilla creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManillaNfcResponseDTO'
+        '400':
+          description: Payload invÃ¡lido.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol ADMINISTRADOR.
+        '409':
+          description: CÃ³digo NFC duplicado o deportista con manilla activa.
+        '503':
+          description: Dependencia de deportista no disponible.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/manillas-nfc/{id}/bloquear:
+    post:
+      tags:
+        - Manillas NFC
+      summary: Bloquear manilla NFC
+      description: "Rol: ADMINISTRADOR. Cambia estado administrativo sin borrar historial."
+      operationId: bloquearManillaNfc
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la manilla NFC.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BloquearManillaRequestDTO'
+      responses:
+        '200':
+          description: Manilla bloqueada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManillaNfcResponseDTO'
+        '400':
+          description: Payload invÃ¡lido.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol ADMINISTRADOR.
+        '404':
+          description: Manilla no encontrada.
+        '422':
+          description: Cambio de estado no permitido.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/manillas-nfc/{id}/reponer:
+    post:
+      tags:
+        - Manillas NFC
+      summary: Reponer manilla NFC
+      description: "Rol: ADMINISTRADOR. Bloquea la anterior y crea una nueva manilla activa sin tocar accesos previos."
+      operationId: reponerManillaNfc
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la manilla NFC a reponer.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReponerManillaRequestDTO'
+      responses:
+        '201':
+          description: ReposiciÃ³n creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManillaNfcResponseDTO'
+        '400':
+          description: Payload invÃ¡lido.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol ADMINISTRADOR.
+        '404':
+          description: Manilla original no encontrada.
+        '409':
+          description: CÃ³digo nuevo duplicado o conflicto de concurrencia.
+        '422':
+          description: Regla de negocio incumplida.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/manillas-nfc/deportista/{deportistaId}:
+    get:
+      tags:
+        - Manillas NFC
+      summary: Consultar historial de manillas por deportista
+      description: "Rol: ADMINISTRADOR. Retorna historial paginado sin HMAC ni cÃ³digo NFC real."
+      operationId: historialManillasPorDeportista
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: path
+          required: true
+          description: Deportista externo.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d004
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Consulta paginada exitosa.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ManillaNfcResponseDTO'
+                  totalPages:
+                    type: integer
+                  totalElements:
+                    type: integer
+                    format: int64
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+        '400':
+          description: ParÃ¡metros invÃ¡lidos.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol ADMINISTRADOR.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/accesos-nfc/validar:
+    post:
+      tags:
+        - Accesos NFC
+      summary: Validar acceso NFC desde gateway tÃ©cnico
+      description: Endpoint exclusivo para Raspberry Pi Gateway. No usa autenticaciÃ³n humana; requiere headers tÃ©cnicos y nunca devuelve HMAC, API keys, deportistaId ni motivo interno detallado.
+      operationId: validarAccesoNfc
+      security: []
+      parameters:
+        - name: X-Gateway-Id
+          in: header
+          required: false
+          description: CÃ³digo pÃºblico del gateway.
+          schema:
+            type: string
+          example: gateway-puerta-principal
+        - name: X-Gateway-Key
+          in: header
+          required: false
+          description: Clave tÃ©cnica del gateway. No usar secretos reales en Swagger.
+          schema:
+            type: string
+          example: gateway-key-ejemplo
+        - name: X-Request-Id
+          in: header
+          required: false
+          description: Correlation ID UUID. Si falta o no es UUID, el backend genera uno.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d301
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidarAccesoNfcRequestDTO'
+      responses:
+        '200':
+          description: ValidaciÃ³n procesada con respuesta segura.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidacionAccesoResponseDTO'
+        '400':
+          description: Payload invÃ¡lido.
+        '401':
+          description: Gateway inexistente o API key incorrecta.
+        '403':
+          description: Gateway suspendido o revocado.
+        '404':
+          description: MÃ¡quina inexistente.
+        '409':
+          description: Evento repetido con payload conflictivo.
+        '503':
+          description: Dependencia externa no disponible.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/accesos-nfc:
+    get:
+      tags:
+        - Accesos NFC
+      summary: Consultar historial de accesos NFC
+      description: "Roles: ADMINISTRADOR, MEDICO, ENTRENADOR. No expone HMAC, cÃ³digos NFC, API keys ni datos mÃ©dicos."
+      operationId: consultarAccesosNfc
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: query
+          required: false
+          description: Filtra por deportista externo.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d004
+        - name: maquinaId
+          in: query
+          required: false
+          description: Filtra por mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d005
+        - name: sedeId
+          in: query
+          required: false
+          description: Filtra por sede resuelta desde mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d006
+        - name: fechaDesde
+          in: query
+          required: false
+          description: Fecha inicial en UTC.
+          schema:
+            type: string
+            format: date-time
+          example: 2026-07-05T00:00:00Z
+        - name: fechaHasta
+          in: query
+          required: false
+          description: Fecha final en UTC.
+          schema:
+            type: string
+            format: date-time
+          example: 2026-07-05T23:59:59Z
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Consulta paginada exitosa.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccesoNfcHistorialResponseDTO'
+                  totalPages:
+                    type: integer
+                  totalElements:
+                    type: integer
+                    format: int64
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+        '400':
+          description: Filtros o parÃ¡metros de paginaciÃ³n invÃ¡lidos.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol permitido.
+        '422':
+          description: Rango de fechas invÃ¡lido.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/intentos-fallidos:
+    get:
+      tags:
+        - Intentos Fallidos
+      summary: Consultar intentos fallidos de acceso
+      description: "Rol: ADMINISTRADOR. No expone HMAC de NFC, cÃ³digo NFC real ni detalles tÃ©cnicos sensibles."
+      operationId: consultarIntentosFallidos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: maquinaId
+          in: query
+          required: false
+          description: Filtra por mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d103
+        - name: gatewayId
+          in: query
+          required: false
+          description: Filtra por gateway tÃ©cnico.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d105
+        - name: motivo
+          in: query
+          required: false
+          description: Motivo administrativo del rechazo.
+          schema:
+            $ref: '#/components/schemas/MotivoFalloAcceso'
+        - name: fechaDesde
+          in: query
+          required: false
+          description: Fecha inicial en UTC.
+          schema:
+            type: string
+            format: date-time
+          example: 2026-07-05T00:00:00Z
+        - name: fechaHasta
+          in: query
+          required: false
+          description: Fecha final en UTC.
+          schema:
+            type: string
+            format: date-time
+          example: 2026-07-05T23:59:59Z
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Consulta paginada exitosa.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntentoFallidoAccesoResponseDTO'
+                  totalPages:
+                    type: integer
+                  totalElements:
+                    type: integer
+                    format: int64
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+        '400':
+          description: Filtros o parÃ¡metros de paginaciÃ³n invÃ¡lidos.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol ADMINISTRADOR.
+        '422':
+          description: Rango de fechas invÃ¡lido.
+        '500':
+          description: Error inesperado.
+
+  /api/v1/auditorias-manillas:
+    get:
+      tags:
+        - AuditorÃ­a Manillas
+      summary: Consultar auditorÃ­as de manillas NFC
+      description: "Rol: ADMINISTRADOR. Consulta cambios de estado y reposiciones sin cÃ³digo NFC real."
+      operationId: consultarAuditoriasManillas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: manillaId
+          in: query
+          required: false
+          description: Filtra por manilla.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d202
+        - name: actorId
+          in: query
+          required: false
+          description: Filtra por actor administrativo.
+          schema:
+            type: string
+            format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d203
+        - name: accion
+          in: query
+          required: false
+          description: Filtra por acciÃ³n de auditorÃ­a.
+          schema:
+            $ref: '#/components/schemas/AccionAuditoriaManilla'
+        - name: fechaDesde
+          in: query
+          required: false
+          description: Fecha inicial en UTC.
+          schema:
+            type: string
+            format: date-time
+          example: 2026-07-05T00:00:00Z
+        - name: fechaHasta
+          in: query
+          required: false
+          description: Fecha final en UTC.
+          schema:
+            type: string
+            format: date-time
+          example: 2026-07-05T23:59:59Z
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Consulta paginada exitosa.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditoriaManillaResponseDTO'
+                  totalPages:
+                    type: integer
+                  totalElements:
+                    type: integer
+                    format: int64
+                  page:
+                    type: integer
+                  size:
+                    type: integer
+        '400':
+          description: Filtros o parÃ¡metros de paginaciÃ³n invÃ¡lidos.
+        '401':
+          description: Usuario no autenticado.
+        '403':
+          description: Usuario sin rol ADMINISTRADOR.
+        '422':
+          description: Rango de fechas invÃ¡lido.
+        '500':
+          description: Error inesperado.
+
+  /api/gym-approvals:
+    get:
+      tags:
+        - Gym Approvals
+      summary: Listar aprobaciones
+      description: Devuelve todas las aprobaciones registradas.
+      operationId: listarGymApprovals
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de aprobaciones.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GymApprovalResponse'
+    post:
+      tags:
+        - Gym Approvals
+      summary: Crear aprobaciÃ³n
+      description: Registra una nueva aprobaciÃ³n.
+      operationId: crearGymApproval
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GymApprovalRequest'
+      responses:
+        '201':
+          description: AprobaciÃ³n creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GymApprovalResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/gym-approvals/deportista/{deportistaId}:
+    get:
+      tags:
+        - Gym Approvals
+      summary: Listar aprobaciones por deportista
+      description: Devuelve las aprobaciones de un deportista.
+      operationId: listarGymApprovalsPorDeportista
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: path
+          required: true
+          description: Identificador del deportista.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de aprobaciones del deportista.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GymApprovalResponse'
+
+  /api/gym-approvals/{id}:
+    get:
+      tags:
+        - Gym Approvals
+      summary: Obtener aprobaciÃ³n por ID
+      description: Busca una aprobaciÃ³n por su identificador.
+      operationId: obtenerGymApproval
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la aprobaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: AprobaciÃ³n encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GymApprovalResponse'
+        '404':
+          description: AprobaciÃ³n no encontrada.
+    put:
+      tags:
+        - Gym Approvals
+      summary: Actualizar aprobaciÃ³n
+      description: Actualiza los datos de una aprobaciÃ³n existente.
+      operationId: actualizarGymApproval
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la aprobaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GymApprovalRequest'
+      responses:
+        '200':
+          description: AprobaciÃ³n actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GymApprovalResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: AprobaciÃ³n no encontrada.
+    delete:
+      tags:
+        - Gym Approvals
+      summary: Eliminar aprobaciÃ³n
+      description: Elimina una aprobaciÃ³n del sistema.
+      operationId: eliminarGymApproval
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la aprobaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: AprobaciÃ³n eliminada.
+        '404':
+          description: AprobaciÃ³n no encontrada.
+
+  /api/clinical-evaluations:
+    get:
+      tags:
+        - Clinical Evaluations
+      summary: Listar evaluaciones clÃ­nicas
+      description: Devuelve todas las evaluaciones clÃ­nicas registradas.
+      operationId: listarClinicalEvaluations
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de evaluaciones clÃ­nicas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClinicalEvaluationResponse'
+    post:
+      tags:
+        - Clinical Evaluations
+      summary: Crear evaluaciÃ³n clÃ­nica
+      description: Registra una nueva evaluaciÃ³n clÃ­nica.
+      operationId: crearClinicalEvaluation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicalEvaluationRequest'
+      responses:
+        '201':
+          description: EvaluaciÃ³n clÃ­nica creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalEvaluationResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/clinical-evaluations/deportista/{deportistaId}:
+    get:
+      tags:
+        - Clinical Evaluations
+      summary: Listar evaluaciones por deportista
+      description: Devuelve las evaluaciones clÃ­nicas de un deportista.
+      operationId: listarClinicalEvaluationsPorDeportista
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: path
+          required: true
+          description: Identificador del deportista.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de evaluaciones del deportista.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClinicalEvaluationResponse'
+
+  /api/clinical-evaluations/{id}:
+    get:
+      tags:
+        - Clinical Evaluations
+      summary: Obtener evaluaciÃ³n clÃ­nica por ID
+      description: Busca una evaluaciÃ³n clÃ­nica por su identificador.
+      operationId: obtenerClinicalEvaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la evaluaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: EvaluaciÃ³n encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalEvaluationResponse'
+        '404':
+          description: EvaluaciÃ³n no encontrada.
+    put:
+      tags:
+        - Clinical Evaluations
+      summary: Actualizar evaluaciÃ³n clÃ­nica
+      description: Actualiza los datos de una evaluaciÃ³n clÃ­nica existente.
+      operationId: actualizarClinicalEvaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la evaluaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicalEvaluationRequest'
+      responses:
+        '200':
+          description: EvaluaciÃ³n actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicalEvaluationResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: EvaluaciÃ³n no encontrada.
+    delete:
+      tags:
+        - Clinical Evaluations
+      summary: Eliminar evaluaciÃ³n clÃ­nica
+      description: Elimina una evaluaciÃ³n clÃ­nica del sistema.
+      operationId: eliminarClinicalEvaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la evaluaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: EvaluaciÃ³n eliminada.
+        '404':
+          description: EvaluaciÃ³n no encontrada.
+
+  /api/medical-restrictions:
+    get:
+      tags:
+        - Medical Restrictions
+      summary: Listar restricciones mÃ©dicas
+      description: Devuelve todas las restricciones mÃ©dicas registradas.
+      operationId: listarMedicalRestrictions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de restricciones mÃ©dicas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalRestrictionResponse'
+    post:
+      tags:
+        - Medical Restrictions
+      summary: Crear restricciÃ³n mÃ©dica
+      description: Registra una nueva restricciÃ³n mÃ©dica.
+      operationId: crearMedicalRestriction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRestrictionRequest'
+      responses:
+        '201':
+          description: RestricciÃ³n mÃ©dica creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRestrictionResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/medical-restrictions/deportista/{deportistaId}:
+    get:
+      tags:
+        - Medical Restrictions
+      summary: Listar restricciones por deportista
+      description: Devuelve las restricciones mÃ©dicas de un deportista.
+      operationId: listarMedicalRestrictionsPorDeportista
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: path
+          required: true
+          description: Identificador del deportista.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de restricciones del deportista.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalRestrictionResponse'
+
+  /api/medical-restrictions/deportista/{deportistaId}/active:
+    get:
+      tags:
+        - Medical Restrictions
+      summary: Listar restricciones activas por deportista
+      description: Devuelve las restricciones mÃ©dicas activas de un deportista.
+      operationId: listarMedicalRestrictionsActivas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: path
+          required: true
+          description: Identificador del deportista.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de restricciones activas del deportista.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalRestrictionResponse'
+
+  /api/medical-restrictions/{id}:
+    get:
+      tags:
+        - Medical Restrictions
+      summary: Obtener restricciÃ³n mÃ©dica por ID
+      description: Busca una restricciÃ³n mÃ©dica por su identificador.
+      operationId: obtenerMedicalRestriction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la restricciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: RestricciÃ³n encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRestrictionResponse'
+        '404':
+          description: RestricciÃ³n no encontrada.
+    put:
+      tags:
+        - Medical Restrictions
+      summary: Actualizar restricciÃ³n mÃ©dica
+      description: Actualiza los datos de una restricciÃ³n mÃ©dica existente.
+      operationId: actualizarMedicalRestriction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la restricciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicalRestrictionRequest'
+      responses:
+        '200':
+          description: RestricciÃ³n actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicalRestrictionResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: RestricciÃ³n no encontrada.
+    delete:
+      tags:
+        - Medical Restrictions
+      summary: Eliminar restricciÃ³n mÃ©dica
+      description: Elimina una restricciÃ³n mÃ©dica del sistema.
+      operationId: eliminarMedicalRestriction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la restricciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: RestricciÃ³n eliminada.
+        '404':
+          description: RestricciÃ³n no encontrada.
+
+  /api/risk-alerts:
+    get:
+      tags:
+        - Risk Alerts
+      summary: Listar alertas de riesgo
+      description: Devuelve todas las alertas de riesgo registradas.
+      operationId: listarRiskAlerts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de alertas de riesgo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskAlertResponse'
+    post:
+      tags:
+        - Risk Alerts
+      summary: Crear alerta de riesgo
+      description: Registra una nueva alerta de riesgo.
+      operationId: crearRiskAlert
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskAlertRequest'
+      responses:
+        '201':
+          description: Alerta de riesgo creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAlertResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/risk-alerts/deportista/{deportistaId}:
+    get:
+      tags:
+        - Risk Alerts
+      summary: Listar alertas por deportista
+      description: Devuelve las alertas de riesgo de un deportista.
+      operationId: listarRiskAlertsPorDeportista
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: path
+          required: true
+          description: Identificador del deportista.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de alertas del deportista.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskAlertResponse'
+
+  /api/risk-alerts/active:
+    get:
+      tags:
+        - Risk Alerts
+      summary: Listar alertas activas
+      description: Devuelve todas las alertas de riesgo activas.
+      operationId: listarRiskAlertsActivas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de alertas activas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskAlertResponse'
+
+  /api/risk-alerts/{id}:
+    get:
+      tags:
+        - Risk Alerts
+      summary: Obtener alerta de riesgo por ID
+      description: Busca una alerta de riesgo por su identificador.
+      operationId: obtenerRiskAlert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la alerta.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Alerta encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAlertResponse'
+        '404':
+          description: Alerta no encontrada.
+    put:
+      tags:
+        - Risk Alerts
+      summary: Actualizar alerta de riesgo
+      description: Actualiza los datos de una alerta de riesgo existente.
+      operationId: actualizarRiskAlert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la alerta.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskAlertRequest'
+      responses:
+        '200':
+          description: Alerta actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAlertResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Alerta no encontrada.
+    delete:
+      tags:
+        - Risk Alerts
+      summary: Eliminar alerta de riesgo
+      description: Elimina una alerta de riesgo del sistema.
+      operationId: eliminarRiskAlert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la alerta.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Alerta eliminada.
+        '404':
+          description: Alerta no encontrada.
+
+  /api/v1/management-analytics/dashboard:
+    get:
+      tags:
+        - Management Analytics
+      summary: Obtener dashboard de gestiÃ³n, analÃ­tica e impacto
+      description: Obtiene el tablero consolidado con KPIs de negocio y salud.
+      operationId: getDashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          description: Fecha inicial en formato yyyy-MM-dd.
+          schema:
+            type: string
+            format: date
+          example: 2026-07-01
+        - name: endDate
+          in: query
+          required: true
+          description: Fecha final en formato yyyy-MM-dd.
+          schema:
+            type: string
+            format: date
+          example: 2026-07-31
+      responses:
+        '200':
+          description: Tablero calculado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagementAnalyticsDashboardResponse'
+        '400':
+          description: Rango de fechas invÃ¡lido.
+
+  /api/planes:
+    get:
+      tags:
+        - Planes Nutricionales
+      summary: Listar planes nutricionales
+      description: Devuelve todos los planes nutricionales registrados.
+      operationId: listarPlanesNutricionales
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de planes nutricionales.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanNutricionalDTO'
+    post:
+      tags:
+        - Planes Nutricionales
+      summary: Crear plan nutricional
+      description: Registra un nuevo plan nutricional.
+      operationId: crearPlanNutricional
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanNutricionalDTO'
+      responses:
+        '201':
+          description: Plan nutricional creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanNutricionalDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/planes/{id}:
+    get:
+      tags:
+        - Planes Nutricionales
+      summary: Obtener plan nutricional por ID
+      description: Busca un plan nutricional por su identificador.
+      operationId: obtenerPlanNutricional
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del plan nutricional.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Plan nutricional encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanNutricionalDTO'
+        '404':
+          description: Plan no encontrado.
+    put:
+      tags:
+        - Planes Nutricionales
+      summary: Actualizar plan nutricional
+      description: Actualiza los datos de un plan nutricional existente.
+      operationId: actualizarPlanNutricional
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del plan nutricional.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanNutricionalDTO'
+      responses:
+        '200':
+          description: Plan nutricional actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanNutricionalDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Plan no encontrado.
+    delete:
+      tags:
+        - Planes Nutricionales
+      summary: Eliminar plan nutricional
+      description: Elimina un plan nutricional del sistema.
+      operationId: eliminarPlanNutricional
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del plan nutricional.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Plan eliminado.
+        '404':
+          description: Plan no encontrado.
+
+  /api/detalles:
+    get:
+      tags:
+        - Detalles de Plan
+      summary: Listar detalles de plan
+      description: Devuelve todos los detalles de planes nutricionales registrados.
+      operationId: listarDetallesPlan
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de detalles de plan.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DetallePlanDTO'
+    post:
+      tags:
+        - Detalles de Plan
+      summary: Crear detalle de plan
+      description: Registra un nuevo detalle de plan nutricional.
+      operationId: crearDetallePlan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetallePlanDTO'
+      responses:
+        '201':
+          description: Detalle de plan creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetallePlanDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/detalles/{id}:
+    get:
+      tags:
+        - Detalles de Plan
+      summary: Obtener detalle de plan por ID
+      description: Busca un detalle de plan por su identificador.
+      operationId: obtenerDetallePlan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del detalle de plan.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalle de plan encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetallePlanDTO'
+        '404':
+          description: Detalle no encontrado.
+    put:
+      tags:
+        - Detalles de Plan
+      summary: Actualizar detalle de plan
+      description: Actualiza los datos de un detalle de plan existente.
+      operationId: actualizarDetallePlan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del detalle de plan.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetallePlanDTO'
+      responses:
+        '200':
+          description: Detalle de plan actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetallePlanDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Detalle no encontrado.
+    delete:
+      tags:
+        - Detalles de Plan
+      summary: Eliminar detalle de plan
+      description: Elimina un detalle de plan del sistema.
+      operationId: eliminarDetallePlan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del detalle de plan.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Detalle eliminado.
+        '404':
+          description: Detalle no encontrado.
+
+  /api/alimentos:
+    get:
+      tags:
+        - Alimentos
+      summary: Listar alimentos
+      description: Devuelve todos los alimentos registrados.
+      operationId: listarAlimentos
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de alimentos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlimentoDTO'
+    post:
+      tags:
+        - Alimentos
+      summary: Crear alimento
+      description: Registra un nuevo alimento.
+      operationId: crearAlimento
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlimentoDTO'
+      responses:
+        '201':
+          description: Alimento creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlimentoDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/alimentos/{id}:
+    get:
+      tags:
+        - Alimentos
+      summary: Obtener alimento por ID
+      description: Busca un alimento por su identificador.
+      operationId: obtenerAlimento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del alimento.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Alimento encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlimentoDTO'
+        '404':
+          description: Alimento no encontrado.
+    put:
+      tags:
+        - Alimentos
+      summary: Actualizar alimento
+      description: Actualiza los datos de un alimento existente.
+      operationId: actualizarAlimento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del alimento.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlimentoDTO'
+      responses:
+        '200':
+          description: Alimento actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlimentoDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Alimento no encontrado.
+    delete:
+      tags:
+        - Alimentos
+      summary: Eliminar alimento
+      description: Elimina un alimento del sistema.
+      operationId: eliminarAlimento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del alimento.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Alimento eliminado.
+        '404':
+          description: Alimento no encontrado.
+
+  /api/iot/maquinas:
+    post:
+      tags:
+        - IoT - MÃ¡quinas
+      summary: Crear una nueva mÃ¡quina
+      description: Registra una nueva mÃ¡quina en el sistema IoT.
+      operationId: crearMaquina
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaquinaRequestDTO'
+      responses:
+        '201':
+          description: MÃ¡quina creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaquinaResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+    get:
+      tags:
+        - IoT - MÃ¡quinas
+      summary: Listar todas las mÃ¡quinas
+      description: Devuelve todas las mÃ¡quinas registradas.
+      operationId: listarMaquinas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de mÃ¡quinas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaquinaResponseDTO'
+
+  /api/iot/maquinas/{id}:
+    get:
+      tags:
+        - IoT - MÃ¡quinas
+      summary: Obtener una mÃ¡quina por ID
+      description: Busca una mÃ¡quina por su identificador.
+      operationId: obtenerMaquina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: MÃ¡quina encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaquinaResponseDTO'
+        '404':
+          description: MÃ¡quina no encontrada.
+
+  /api/iot/telemetria:
+    post:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Registrar una lectura de telemetrÃ­a
+      description: Registra una nueva lectura de telemetrÃ­a desde mÃ¡quinas IoT.
+      operationId: registrarTelemetria
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LecturaTelemetriaRequestDTO'
+      responses:
+        '201':
+          description: Lectura de telemetrÃ­a registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LecturaTelemetriaResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/iot/maquinas/{maquinaId}/telemetria:
+    get:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Obtener historial de telemetrÃ­a de una mÃ¡quina
+      description: Devuelve el historial de lecturas de telemetrÃ­a de una mÃ¡quina especÃ­fica.
+      operationId: obtenerTelemetriaPorMaquina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: maquinaId
+          in: path
+          required: true
+          description: Identificador de la mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historial de telemetrÃ­a de la mÃ¡quina.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LecturaTelemetriaResponseDTO'
+
+  /api/iot/usuarios/{usuarioId}/fatiga:
+    get:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Obtener registro de fatiga de un usuario
+      description: Devuelve el Ãºltimo registro de fatiga de un usuario.
+      operationId: obtenerFatigaUsuario
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador del usuario.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Registro de fatiga del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroFatigaResponseDTO'
+        '204':
+          description: No hay registro de fatiga disponible.
+
+  /api/iot/mantenimiento/alertas:
+    get:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Listar alertas de mantenimiento abiertas
+      description: Devuelve todas las alertas de mantenimiento abiertas.
+      operationId: listarAlertasMantenimiento
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de alertas de mantenimiento abiertas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertaMantenimientoResponseDTO'
+
+  /api/v1/iot/telemetria:
+    post:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Registrar lectura de telemetrÃ­a (paginado)
+      description: Registra una nueva lectura de telemetrÃ­a.
+      operationId: registrarTelemetriaV1
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LecturaTelemetriaRequestDTO'
+      responses:
+        '201':
+          description: Lectura de telemetrÃ­a registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LecturaTelemetriaResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/v1/iot/telemetria/maquina/{maquinaId}:
+    get:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Listar telemetrÃ­a por mÃ¡quina (paginado)
+      description: Devuelve las lecturas de telemetrÃ­a de una mÃ¡quina con paginaciÃ³n.
+      operationId: listarTelemetriaPorMaquinaV1
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: maquinaId
+          in: path
+          required: true
+          description: Identificador de la mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Lista paginada de telemetrÃ­a de la mÃ¡quina.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /api/v1/iot/telemetria/usuario/{usuarioId}:
+    get:
+      tags:
+        - IoT - TelemetrÃ­a
+      summary: Listar telemetrÃ­a por usuario (paginado)
+      description: Devuelve las lecturas de telemetrÃ­a de un usuario con paginaciÃ³n.
+      operationId: listarTelemetriaPorUsuarioV1
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador del usuario.
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Lista paginada de telemetrÃ­a del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /api/v1/iot/alertas:
+    post:
+      tags:
+        - IoT - Alertas de Mantenimiento
+      summary: Registrar alerta de mantenimiento
+      description: Crea una nueva alerta de mantenimiento.
+      operationId: registrarAlertaMantenimiento
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertaMantenimientoRequestDTO'
+      responses:
+        '201':
+          description: Alerta de mantenimiento creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertaMantenimientoResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/v1/iot/alertas/{id}/estado:
+    patch:
+      tags:
+        - IoT - Alertas de Mantenimiento
+      summary: Actualizar estado de alerta de mantenimiento
+      description: Actualiza el estado de una alerta de mantenimiento existente.
+      operationId: actualizarEstadoAlerta
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la alerta.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstadoAlertaUpdateRequestDTO'
+      responses:
+        '200':
+          description: Estado de alerta actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertaMantenimientoResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Alerta no encontrada.
+
+  /api/v1/iot/alertas/maquina/{maquinaId}:
+    get:
+      tags:
+        - IoT - Alertas de Mantenimiento
+      summary: Listar alertas por mÃ¡quina
+      description: Devuelve las alertas de mantenimiento de una mÃ¡quina especÃ­fica.
+      operationId: listarAlertasPorMaquina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: maquinaId
+          in: path
+          required: true
+          description: Identificador de la mÃ¡quina.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de alertas de la mÃ¡quina.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlertaMantenimientoResponseDTO'
+
+  /api/v1/iot/alertas/evaluar/{maquinaId}:
+    post:
+      tags:
+        - IoT - Alertas de Mantenimiento
+      summary: Evaluar mÃ¡quina
+      description: EvalÃºa una mÃ¡quina y genera alertas de mantenimiento si es necesario.
+      operationId: evaluarMaquina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: maquinaId
+          in: path
+          required: true
+          description: Identificador de la mÃ¡quina a evaluar.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: MÃ¡quina evaluada correctamente.
+        '404':
+          description: MÃ¡quina no encontrada.
+
+  /api/v1/iot/fatiga/calcular:
+    post:
+      tags:
+        - IoT - Registro de Fatiga
+      summary: Calcular nivel de fatiga
+      description: Calcula y registra el nivel de fatiga de un usuario basado en telemetrÃ­a.
+      operationId: calcularFatiga
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroFatigaRequestDTO'
+      responses:
+        '201':
+          description: Nivel de fatiga calculado y registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroFatigaResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/v1/iot/fatiga/ultimo/{usuarioId}:
+    get:
+      tags:
+        - IoT - Registro de Fatiga
+      summary: Obtener Ãºltimo registro de fatiga
+      description: Devuelve el Ãºltimo registro de fatiga de un usuario.
+      operationId: obtenerUltimoRegistroFatiga
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador del usuario.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ãšltimo registro de fatiga encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroFatigaResponseDTO'
+        '204':
+          description: No hay registro de fatiga disponible.
+
+  /api/exergames/sesiones:
+    post:
+      tags:
+        - Exergames - Sesiones
+      summary: Registrar una sesiÃ³n de exergame
+      description: Registra una nueva sesiÃ³n de exergame.
+      operationId: registrarSesionExergame
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SesionExergameRequestDTO'
+      responses:
+        '201':
+          description: SesiÃ³n de exergame registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SesionExergameResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/exergames/sesiones/usuario/{usuarioId}:
+    get:
+      tags:
+        - Exergames - Sesiones
+      summary: Obtener historial de sesiones de un usuario
+      description: Devuelve el historial de sesiones de exergame de un usuario.
+      operationId: obtenerSesionesPorUsuario
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador del usuario.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historial de sesiones del usuario.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SesionExergameResponseDTO'
+
+  /api/exergames/sesiones/estacion/{estacionId}:
+    get:
+      tags:
+        - Exergames - Sesiones
+      summary: Obtener historial de sesiones de una estaciÃ³n XR
+      description: Devuelve el historial de sesiones de exergame de una estaciÃ³n XR.
+      operationId: obtenerSesionesPorEstacion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estacionId
+          in: path
+          required: true
+          description: Identificador de la estaciÃ³n XR.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historial de sesiones de la estaciÃ³n.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SesionExergameResponseDTO'
+
+  /api/exergames/estaciones:
+    post:
+      tags:
+        - Exergames - Estaciones XR
+      summary: Crear una nueva estaciÃ³n XR
+      description: Registra una nueva estaciÃ³n de realidad extendida.
+      operationId: crearEstacionXr
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstacionXrRequestDTO'
+      responses:
+        '201':
+          description: EstaciÃ³n XR creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstacionXrResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+    get:
+      tags:
+        - Exergames - Estaciones XR
+      summary: Listar todas las estaciones XR
+      description: Devuelve todas las estaciones de realidad extendida registradas.
+      operationId: listarEstacionesXr
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de estaciones XR.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EstacionXrResponseDTO'
+
+  /api/exergames/estaciones/{id}:
+    get:
+      tags:
+        - Exergames - Estaciones XR
+      summary: Obtener una estaciÃ³n XR por ID
+      description: Busca una estaciÃ³n XR por su identificador.
+      operationId: obtenerEstacionXr
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la estaciÃ³n XR.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: EstaciÃ³n XR encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstacionXrResponseDTO'
+        '404':
+          description: EstaciÃ³n no encontrada.
+
+  /api/exergames/usuarios/{usuarioId}/protocolo-seguridad:
+    get:
+      tags:
+        - Exergames - Protocolo Seguridad
+      summary: Obtener protocolos de seguridad aplicables a un usuario
+      description: Devuelve los protocolos de seguridad aplicables a un usuario.
+      operationId: obtenerProtocolosSeguridad
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador del usuario.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Protocolos de seguridad del usuario.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProtocoloSeguridadResponseDTO'
+
+  /api/exergames/desafios:
+    post:
+      tags:
+        - Exergames - DesafÃ­os
+      summary: Crear un nuevo desafÃ­o
+      description: Crea un nuevo desafÃ­o global o mensual.
+      operationId: crearDesafio
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesafioRequestDTO'
+      responses:
+        '201':
+          description: DesafÃ­o creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesafioResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+    get:
+      tags:
+        - Exergames - DesafÃ­os
+      summary: Listar todos los desafÃ­os
+      description: Devuelve todos los desafÃ­os registrados.
+      operationId: listarDesafios
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de desafÃ­os.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DesafioResponseDTO'
+
+  /api/exergames/desafios/puntajes:
+    post:
+      tags:
+        - Exergames - DesafÃ­os
+      summary: Registrar un puntaje en un desafÃ­o
+      description: Registra el puntaje de un usuario en un desafÃ­o.
+      operationId: registrarPuntajeDesafio
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PuntajeRankingRequestDTO'
+      responses:
+        '201':
+          description: Puntaje registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PuntajeRankingResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/exergames/rankings/{desafioId}:
+    get:
+      tags:
+        - Exergames - DesafÃ­os
+      summary: Obtener el ranking de un desafÃ­o
+      description: Devuelve el ranking de puntajes de un desafÃ­o.
+      operationId: obtenerRankingDesafio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: desafioId
+          in: path
+          required: true
+          description: Identificador del desafÃ­o.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ranking del desafÃ­o.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PuntajeRankingResponseDTO'
+
+  /api/aiprescription/ejercicios:
+    post:
+      tags:
+        - AI Prescription - Ejercicios
+      summary: Crear un ejercicio
+      description: Registra un nuevo ejercicio en el sistema de prescripciÃ³n.
+      operationId: crearEjercicio
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEjercicioRequest'
+      responses:
+        '201':
+          description: Ejercicio creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EjercicioResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '409':
+          description: Ya existe un ejercicio con ese nombre.
+    get:
+      tags:
+        - AI Prescription - Ejercicios
+      summary: Listar ejercicios
+      description: Devuelve todos los ejercicios registrados.
+      operationId: listarEjercicios
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de ejercicios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EjercicioResponse'
+
+  /api/aiprescription/ejercicios/{id}:
+    get:
+      tags:
+        - AI Prescription - Ejercicios
+      summary: Obtener un ejercicio por ID
+      description: Busca un ejercicio por su identificador.
+      operationId: obtenerEjercicio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del ejercicio.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ejercicio encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EjercicioResponse'
+        '404':
+          description: Ejercicio no encontrado.
+    put:
+      tags:
+        - AI Prescription - Ejercicios
+      summary: Actualizar un ejercicio
+      description: Actualiza los datos de un ejercicio existente.
+      operationId: actualizarEjercicio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del ejercicio.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEjercicioRequest'
+      responses:
+        '200':
+          description: Ejercicio actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EjercicioResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Ejercicio no encontrado.
+        '409':
+          description: Ya existe un ejercicio con ese nombre.
+    delete:
+      tags:
+        - AI Prescription - Ejercicios
+      summary: Eliminar un ejercicio
+      description: Desactiva un ejercicio sin borrarlo fÃ­sicamente.
+      operationId: eliminarEjercicio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del ejercicio.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Ejercicio eliminado.
+        '404':
+          description: Ejercicio no encontrado.
+
+  /api/aiprescription/plantillas:
+    post:
+      tags:
+        - AI Prescription - Plantillas
+      summary: Crear plantilla de rutina
+      description: Registra una nueva plantilla de rutina de entrenamiento.
+      operationId: crearPlantillaRutina
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlantillaRutinaRequest'
+      responses:
+        '201':
+          description: Plantilla creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantillaRutinaResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '409':
+          description: Ya existe una plantilla con ese nombre.
+    get:
+      tags:
+        - AI Prescription - Plantillas
+      summary: Listar plantillas de rutina
+      description: Devuelve todas las plantillas de rutina registradas.
+      operationId: listarPlantillasRutina
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de plantillas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlantillaRutinaResponse'
+
+  /api/aiprescription/plantillas/{id}:
+    get:
+      tags:
+        - AI Prescription - Plantillas
+      summary: Obtener plantilla de rutina por ID
+      description: Busca una plantilla de rutina por su identificador.
+      operationId: obtenerPlantillaRutina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la plantilla.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Plantilla encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantillaRutinaResponse'
+        '404':
+          description: Plantilla no encontrada.
+    put:
+      tags:
+        - AI Prescription - Plantillas
+      summary: Actualizar plantilla de rutina
+      description: Actualiza los datos de una plantilla de rutina existente.
+      operationId: actualizarPlantillaRutina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la plantilla.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlantillaRutinaRequest'
+      responses:
+        '200':
+          description: Plantilla actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantillaRutinaResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Plantilla no encontrada.
+        '409':
+          description: Ya existe una plantilla con ese nombre.
+    delete:
+      tags:
+        - AI Prescription - Plantillas
+      summary: Eliminar plantilla de rutina
+      description: Desactiva una plantilla sin borrarla fÃ­sicamente.
+      operationId: eliminarPlantillaRutina
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la plantilla.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Plantilla eliminada.
+        '404':
+          description: Plantilla no encontrada.
+
+  /api/aiprescription/planes:
+    post:
+      tags:
+        - AI Prescription - Planes
+      summary: Crear plan de entrenamiento
+      description: Registra un nuevo plan de entrenamiento.
+      operationId: crearPlanEntrenamiento
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlanEntrenamientoRequest'
+      responses:
+        '201':
+          description: Plan de entrenamiento creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanEntrenamientoResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Plantilla no encontrada.
+    get:
+      tags:
+        - AI Prescription - Planes
+      summary: Listar planes de entrenamiento
+      description: Devuelve todos los planes o solo los de un deportista.
+      operationId: listarPlanesEntrenamiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deportistaId
+          in: query
+          required: false
+          description: Filtra por deportista.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de planes de entrenamiento.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanEntrenamientoResponse'
+
+  /api/aiprescription/planes/{id}:
+    get:
+      tags:
+        - AI Prescription - Planes
+      summary: Obtener plan de entrenamiento por ID
+      description: Busca un plan de entrenamiento por su identificador.
+      operationId: obtenerPlanEntrenamiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del plan.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Plan encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanEntrenamientoResponse'
+        '404':
+          description: Plan no encontrado.
+    put:
+      tags:
+        - AI Prescription - Planes
+      summary: Actualizar plan de entrenamiento
+      description: Actualiza los datos de un plan existente.
+      operationId: actualizarPlanEntrenamiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del plan.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlanEntrenamientoRequest'
+      responses:
+        '200':
+          description: Plan actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanEntrenamientoResponse'
+        '400':
+          description: Datos invÃ¡lidos.
+        '404':
+          description: Plan o plantilla no encontrada.
+    delete:
+      tags:
+        - AI Prescription - Planes
+      summary: Eliminar plan de entrenamiento
+      description: Elimina un plan de entrenamiento del sistema.
+      operationId: eliminarPlanEntrenamiento
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del plan.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Plan eliminado.
+        '404':
+          description: Plan no encontrado.
+
+  /api/agendamiento/slots:
+    get:
+      tags:
+        - Agendamiento - Slots
+      summary: Listar slots por espacio y fecha
+      description: Devuelve los slots horarios disponibles para un espacio y fecha.
+      operationId: listarSlots
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: espacio
+          in: query
+          required: true
+          description: Identificador del espacio.
+          schema:
+            type: string
+            format: uuid
+        - name: fecha
+          in: query
+          required: true
+          description: Fecha en formato yyyy-MM-dd.
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Lista de slots disponibles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SlotHorarioResponseDTO'
+
+  /api/agendamiento/reservas:
+    post:
+      tags:
+        - Agendamiento - Reservas
+      summary: Crear una nueva reserva
+      description: Crea una nueva reserva para un slot y usuario.
+      operationId: crearReserva
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaRequestDTO'
+      responses:
+        '201':
+          description: Reserva creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservaResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/agendamiento/reservas/{id}:
+    delete:
+      tags:
+        - Agendamiento - Reservas
+      summary: Cancelar una reserva existente
+      description: Cancela una reserva existente validando el usuario solicitante.
+      operationId: cancelarReserva
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la reserva.
+          schema:
+            type: string
+            format: uuid
+        - name: usuarioId
+          in: query
+          required: true
+          description: Identificador del usuario que solicita la cancelaciÃ³n.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Reserva cancelada.
+        '404':
+          description: Reserva no encontrada.
+
+  /api/agendamiento/espacios:
+    post:
+      tags:
+        - Agendamiento - Espacios
+      summary: Crear un nuevo espacio/zona
+      description: Registra un nuevo espacio o zona en el gimnasio.
+      operationId: crearEspacio
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EspacioZonaRequestDTO'
+      responses:
+        '201':
+          description: Espacio creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EspacioZonaResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+    get:
+      tags:
+        - Agendamiento - Espacios
+      summary: Listar todos los espacios
+      description: Devuelve todos los espacios y zonas registrados.
+      operationId: listarEspacios
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de espacios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EspacioZonaResponseDTO'
+
+  /api/agendamiento/espacios/tipo/{tipo}:
+    get:
+      tags:
+        - Agendamiento - Espacios
+      summary: Listar espacios por tipo
+      description: Devuelve los espacios filtrados por tipo.
+      operationId: listarEspaciosPorTipo
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tipo
+          in: path
+          required: true
+          description: Tipo de espacio.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de espacios del tipo especificado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EspacioZonaResponseDTO'
+
+  /api/agendamiento/espacios/{id}:
+    get:
+      tags:
+        - Agendamiento - Espacios
+      summary: Obtener un espacio por ID
+      description: Busca un espacio por su identificador.
+      operationId: obtenerEspacio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador del espacio.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Espacio encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EspacioZonaResponseDTO'
+        '404':
+          description: Espacio no encontrado.
+
+  /api/agendamiento/espacios/aforo:
+    post:
+      tags:
+        - Agendamiento - Espacios
+      summary: Registrar un nuevo conteo de aforo
+      description: Registra un nuevo conteo de aforo para un espacio.
+      operationId: registrarAforo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroAforoRequestDTO'
+      responses:
+        '201':
+          description: Conteo de aforo registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroAforoResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/agendamiento/espacios/{espacioId}/aforo:
+    get:
+      tags:
+        - Agendamiento - Espacios
+      summary: Obtener el conteo actual de aforo de un espacio
+      description: Devuelve el conteo de aforo actual de un espacio.
+      operationId: obtenerAforo
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: espacioId
+          in: path
+          required: true
+          description: Identificador del espacio.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conteo de aforo actual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistroAforoResponseDTO'
+
+  /api/agendamiento/citas-salud:
+    post:
+      tags:
+        - Agendamiento - Citas de Salud
+      summary: Crear una cita de salud vinculada a una reserva
+      description: Crea una nueva cita de salud asociada a una reserva.
+      operationId: crearCitaSalud
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CitaSaludRequestDTO'
+      responses:
+        '201':
+          description: Cita de salud creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CitaSaludResponseDTO'
+        '400':
+          description: Datos invÃ¡lidos.
+
+  /api/agendamiento/citas-salud/usuario/{usuarioId}:
+    get:
+      tags:
+        - Agendamiento - Citas de Salud
+      summary: Listar citas de salud de un usuario
+      description: Devuelve las citas de salud de un usuario.
+      operationId: listarCitasSaludPorUsuario
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: usuarioId
+          in: path
+          required: true
+          description: Identificador del usuario.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de citas de salud del usuario.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CitaSaludResponseDTO'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT emitido por Supabase. Enviar como Authorization: Bearer <token>"
+
+  schemas:
+    # ============================================================
+    # ENUMS
+    # ============================================================
+    EstadoManilla:
+      type: string
+      description: Estado administrativo de una manilla NFC.
+      enum:
+        - ACTIVA
+        - PERDIDA
+        - BLOQUEADA_TEMPORAL
+        - DESACTIVADA
+        - REPUESTA
+        - VENCIDA
+      example: ACTIVA
+
+    ResultadoAcceso:
+      type: string
+      description: Resultado de la validaciÃ³n de acceso NFC.
+      enum:
+        - EXITOSO
+        - FALLIDO
+      example: EXITOSO
+
+    MotivoFalloAcceso:
+      type: string
+      description: Motivo administrativo del fallo de acceso.
+      enum:
+        - MANILLA_NO_ENCONTRADA
+        - MANILLA_BLOQUEADA
+        - MANILLA_VENCIDA
+        - DEPORTISTA_INACTIVO
+        - MAQUINA_NO_AUTORIZADA
+        - CODIGO_NFC_INVALIDO
+        - GATEWAY_NO_AUTORIZADO
+        - GATEWAY_SUSPENDIDO
+        - ERROR_INTERNO
+      example: MANILLA_NO_ENCONTRADA
+
+    AccionAuditoriaManilla:
+      type: string
+      description: AcciÃ³n de auditorÃ­a realizada sobre una manilla NFC.
+      enum:
+        - REGISTRAR_MANILLA
+        - BLOQUEAR_MANILLA
+        - REPONER_MANILLA
+        - DESBLOQUEAR_MANILLA
+        - ACTUALIZAR_ESTADO
+      example: BLOQUEAR_MANILLA
+
+    ApprovalStatus:
+      type: string
+      description: Estado de una aprobaciÃ³n de ingreso al gimnasio.
+      enum:
+        - PENDIENTE
+        - APROBADO
+        - RECHAZADO
+        - EXPIRADO
+      example: APROBADO
+
+    AlertType:
+      type: string
+      description: Tipo de alerta clÃ­nica o de restricciÃ³n.
+      enum:
+        - CARDIOVASCULAR
+        - MUSCULOESQUELETICO
+        - RESPIRATORIO
+        - METABOLICO
+        - NEUROLOGICO
+        - GENERAL
+      example: CARDIOVASCULAR
+
+    AlertLevel:
+      type: string
+      description: Nivel de riesgo de una alerta.
+      enum:
+        - BAJO
+        - MEDIO
+        - ALTO
+        - CRITICO
+      example: MEDIO
+
+    RestrictionType:
+      type: string
+      description: Tipo de restricciÃ³n mÃ©dica.
+      enum:
+        - TEMPORAL
+        - PERMANENTE
+        - PARCIAL
+        - TOTAL
+      example: TEMPORAL
+
+    EstadoConexion:
+      type: string
+      description: Estado de conexiÃ³n de un dispositivo IoT.
+      enum:
+        - CONECTADO
+        - DESCONECTADO
+        - MANTENIMIENTO
+        - ERROR
+      example: CONECTADO
+
+    EstadoCalibracion:
+      type: string
+      description: Estado de calibraciÃ³n de una mÃ¡quina.
+      enum:
+        - CALIBRADA
+        - NO_CALIBRADA
+        - EN_PROCESO
+        - ERROR
+      example: CALIBRADA
+
+    TipoDato:
+      type: string
+      description: Tipo de dato de telemetrÃ­a.
+      enum:
+        - FRECUENCIA_CARDIACA
+        - VELOCIDAD
+        - DISTANCIA
+        - POTENCIA
+        - PESO
+        - REPETICIONES
+        - TIEMPO
+        - OTRO
+      example: FRECUENCIA_CARDIACA
+
+    OrigenDato:
+      type: string
+      description: Origen del dato registrado.
+      enum:
+        - IOT
+        - MANUAL
+        - EXERGAME
+        - SISTEMA
+      example: IOT
+
+    TipoAlerta:
+      type: string
+      description: Tipo de alerta de mantenimiento.
+      enum:
+        - MANTENIMIENTO_PREVENTIVO
+        - MANTENIMIENTO_CORRECTIVO
+        - CALIBRACION
+        - SEGURIDAD
+        - OTRO
+      example: MANTENIMIENTO_PREVENTIVO
+
+    EstadoAlerta:
+      type: string
+      description: Estado de una alerta de mantenimiento.
+      enum:
+        - ABIERTA
+        - EN_PROCESO
+        - RESUELTA
+        - CERRADA
+      example: ABIERTA
+
+    TipoJuego:
+      type: string
+      description: Tipo de juego de realidad extendida.
+      enum:
+        - CARDIO
+        - EQUILIBRIO
+        - COORDINACION
+        - FUERZA
+        - REHABILITACION
+      example: CARDIO
+
+    PoblacionObjetivo:
+      type: string
+      description: PoblaciÃ³n objetivo para un protocolo de seguridad.
+      enum:
+        - ADULTO_MAYOR
+        - REHABILITACION
+        - EMBARAZADA
+        - PRINCIPIANTE
+        - INTERMEDIO
+        - AVANZADO
+        - GENERAL
+      example: ADULTO_MAYOR
+
+    TipoDesafio:
+      type: string
+      description: Tipo de desafÃ­o de exergames.
+      enum:
+        - DIARIO
+        - SEMANAL
+        - MENSUAL
+        - GLOBAL
+      example: MENSUAL
+
+    GrupoMuscular:
+      type: string
+      description: Grupo muscular principal del ejercicio.
+      enum:
+        - PECHO
+        - ESPALDA
+        - HOMBROS
+        - BICEPS
+        - TRICEPS
+        - PIERNAS
+        - GLUTEOS
+        - ABDOMEN
+        - CUERPO_COMPLETO
+      example: PECHO
+
+    CategoriaEjercicio:
+      type: string
+      description: CategorÃ­a del ejercicio.
+      enum:
+        - FUERZA
+        - CARDIO
+        - FLEXIBILIDAD
+        - EQUILIBRIO
+        - REHABILITACION
+      example: FUERZA
+
+    DificultadEjercicio:
+      type: string
+      description: Nivel de dificultad del ejercicio.
+      enum:
+        - PRINCIPIANTE
+        - INTERMEDIO
+        - AVANZADO
+      example: INTERMEDIO
+
+    TipoEjercicioAI:
+      type: string
+      description: Tipo de ejercicio.
+      enum:
+        - COMPUESTO
+        - AISLAMIENTO
+        - CARDIOVASCULAR
+        - ESTIRAMIENTO
+        - PLIOMETRICO
+      example: COMPUESTO
+
+    ObjetivoPlantilla:
+      type: string
+      description: Objetivo de la plantilla de entrenamiento.
+      enum:
+        - HIPERTROFIA
+        - RESISTENCIA
+        - PERDIDA_DE_PESO
+        - FUERZA
+        - REHABILITACION
+        - MANTENIMIENTO
+      example: HIPERTROFIA
+
+    EstadoPlan:
+      type: string
+      description: Estado de un plan de entrenamiento.
+      enum:
+        - ACTIVO
+        - COMPLETADO
+        - CANCELADO
+        - EN_PAUSA
+      example: ACTIVO
+
+    EstadoSlot:
+      type: string
+      description: Estado de un slot horario.
+      enum:
+        - DISPONIBLE
+        - COMPLETO
+        - CERRADO
+      example: DISPONIBLE
+
+    TipoReserva:
+      type: string
+      description: Tipo de reserva.
+      enum:
+        - CUPO
+        - CITA_SALUD
+        - EVENTO
+      example: CUPO
+
+    EstadoReserva:
+      type: string
+      description: Estado de una reserva.
+      enum:
+        - ACTIVA
+        - CANCELADA
+        - COMPLETADA
+        - NO_ASISTIO
+      example: ACTIVA
+
+    TipoEspacio:
+      type: string
+      description: Tipo de espacio en el gimnasio.
+      enum:
+        - SALA
+        - ZONA
+        - CONSULTORIO
+      example: SALA
+
+    # ============================================================
+    # NFC - MANILLAS (Request/Response)
+    # ============================================================
+    RegistrarManillaNfcRequestDTO:
+      type: object
+      description: Solicitud para registrar una nueva manilla NFC.
+      required:
+        - codigoNfc
+        - deportistaId
+      properties:
+        codigoNfc:
+          type: string
+          description: CÃ³digo NFC real de la manilla.
+          example: NFC-ABCD-1234
+        deportistaId:
+          type: string
+          format: uuid
+          description: Identificador del deportista externo.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d004
+
+    BloquearManillaRequestDTO:
+      type: object
+      description: Solicitud para bloquear una manilla NFC.
+      required:
+        - estadoNuevo
+        - actorTipo
+        - motivo
+      properties:
+        estadoNuevo:
+          $ref: '#/components/schemas/EstadoManilla'
+        actorId:
+          type: string
+          format: uuid
+          description: Identificador del actor administrativo.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d203
+        actorTipo:
+          type: string
+          description: Tipo de actor administrativo.
+          example: ADMINISTRADOR
+        motivo:
+          type: string
+          description: Motivo del bloqueo.
+          example: Robo reportado por el deportista
+
+    ReponerManillaRequestDTO:
+      type: object
+      description: Solicitud para reponer una manilla NFC.
+      required:
+        - codigoNfc
+        - actorTipo
+      properties:
+        codigoNfc:
+          type: string
+          description: CÃ³digo NFC real de la nueva manilla.
+          example: NFC-NUEVO-5678
+        estadoBloqueo:
+          $ref: '#/components/schemas/EstadoManilla'
+        actorId:
+          type: string
+          format: uuid
+          description: Identificador del actor administrativo.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d203
+        actorTipo:
+          type: string
+          description: Tipo de actor administrativo.
+          example: ADMINISTRADOR
+        motivo:
+          type: string
+          description: Motivo de la reposiciÃ³n.
+          example: ReposiciÃ³n por pÃ©rdida
+
+    ValidarAccesoNfcRequestDTO:
+      type: object
+      description: Solicitud de validaciÃ³n de acceso NFC desde gateway.
+      required:
+        - codigoNfc
+        - maquinaId
+        - eventoGatewayId
+        - fechaHoraGateway
+      properties:
+        codigoNfc:
+          type: string
+          description: CÃ³digo NFC leÃ­do por el gateway.
+          example: NFC-ABCD-1234
+        maquinaId:
+          type: string
+          format: uuid
+          description: Identificador de la mÃ¡quina asociada al gateway.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d005
+        eventoGatewayId:
+          type: string
+          format: uuid
+          description: Identificador Ãºnico del evento generado por el gateway.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d006
+        fechaHoraGateway:
+          type: string
+          format: date-time
+          description: Fecha y hora del evento en el gateway.
+          example: 2026-07-05T02:30:00Z
+
+    ManillaNfcResponseDTO:
+      type: object
+      description: Respuesta con datos de una manilla NFC (sin cÃ³digo real).
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador de la manilla.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d001
+        codigoNfcMascara:
+          type: string
+          description: MÃ¡scara segura del cÃ³digo NFC.
+          example: NFC-****-***4
+        estado:
+          $ref: '#/components/schemas/EstadoManilla'
+        deportistaId:
+          type: string
+          format: uuid
+          description: Identificador del deportista asociado.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d004
+        fechaAsignacion:
+          type: string
+          format: date-time
+          description: Fecha de asignaciÃ³n al deportista.
+          example: 2026-07-05T02:30:00Z
+        esReposicion:
+          type: boolean
+          description: Indica si es una manilla de reposiciÃ³n.
+          example: false
+        creadoEn:
+          type: string
+          format: date-time
+          description: Fecha de creaciÃ³n del registro.
+        actualizadoEn:
+          type: string
+          format: date-time
+          description: Fecha de Ãºltima actualizaciÃ³n.
+
+    ValidacionAccesoResponseDTO:
+      type: object
+      description: Respuesta de validaciÃ³n de acceso NFC.
+      properties:
+        accesoPermitido:
+          type: boolean
+          description: Indica si el acceso fue permitido.
+          example: true
+        codigoRespuesta:
+          type: string
+          description: CÃ³digo de respuesta seguro.
+          example: ACCESO_CONCEDIDO
+        eventoGatewayId:
+          type: string
+          format: uuid
+          description: Identificador del evento de gateway.
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d006
+        fechaHoraServidor:
+          type: string
+          format: date-time
+          description: Fecha y hora del servidor al procesar la validaciÃ³n.
+          example: 2026-07-05T02:30:01Z
+
+    AccesoNfcHistorialResponseDTO:
+      type: object
+      description: Registro histÃ³rico de acceso NFC exitoso sin informaciÃ³n sensible.
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d001
+        lecturaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d002
+        manillaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d003
+        deportistaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d004
+        maquinaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d005
+        sedeId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d006
+        gatewayId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d007
+        fechaHoraGateway:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:00Z
+        fechaHoraServidor:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:01Z
+        resultado:
+          $ref: '#/components/schemas/ResultadoAcceso'
+        tiempoRespuestaMs:
+          type: integer
+          format: int64
+          description: Tiempo de respuesta en milisegundos.
+          example: 42
+
+    IntentoFallidoAccesoResponseDTO:
+      type: object
+      description: Intento fallido de acceso NFC para auditorÃ­a administrativa.
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d101
+        lecturaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d102
+        maquinaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d103
+        sedeId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d104
+        gatewayId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d105
+        fechaHoraGateway:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:00Z
+        fechaHoraServidor:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:01Z
+        motivo:
+          $ref: '#/components/schemas/MotivoFalloAcceso'
+        creadoEn:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:01Z
+
+    AuditoriaManillaResponseDTO:
+      type: object
+      description: AuditorÃ­a administrativa de cambios de estado de manillas NFC.
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d201
+        manillaId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d202
+        actorId:
+          type: string
+          format: uuid
+          example: 018f5f44-2e8b-7a1f-bd11-6c51e935d203
+        actorTipo:
+          type: string
+          example: ADMINISTRADOR
+        accion:
+          $ref: '#/components/schemas/AccionAuditoriaManilla'
+        estadoAnterior:
+          $ref: '#/components/schemas/EstadoManilla'
+        estadoNuevo:
+          $ref: '#/components/schemas/EstadoManilla'
+        fechaHora:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:00Z
+        detalle:
+          type: string
+          example: Bloqueo administrativo por reposiciÃ³n
+        creadoEn:
+          type: string
+          format: date-time
+          example: 2026-07-05T02:30:01Z
+
+    ErrorResponseDTO:
+      type: object
+      description: Formato comÃºn de error de la API.
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Marca de tiempo del error.
+        status:
+          type: integer
+          format: int32
+          description: CÃ³digo de estado HTTP.
+        error:
+          type: string
+          description: Tipo de error.
+        message:
+          type: string
+          description: Mensaje descriptivo del error.
+        path:
+          type: string
+          description: Ruta de la API donde ocurriÃ³ el error.
+        fieldErrors:
+          type: array
+          description: Errores de validaciÃ³n por campo.
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Nombre del campo con error.
+              message:
+                type: string
+                description: Mensaje de error del campo.
+
+    # ============================================================
+    # CLINICAL - FISIOTERAPIA
+    # ============================================================
+    ClinicalEvaluationRequest:
+      type: object
+      description: Solicitud para crear o actualizar una evaluaciÃ³n clÃ­nica.
+      required:
+        - deportistaId
+        - profesionalId
+        - diagnostico
+      properties:
+        deportistaId:
+          type: string
+          format: uuid
+          description: Identificador del deportista evaluado.
+        profesionalId:
+          type: string
+          format: uuid
+          description: Identificador del profesional que realiza la evaluaciÃ³n.
+        diagnostico:
+          type: string
+          maxLength: 500
+          description: DiagnÃ³stico de la evaluaciÃ³n.
+        observaciones:
+          type: string
+          maxLength: 1000
+          description: Observaciones adicionales.
+        rpe:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: ÃÍndice de esfuerzo percibido (RPE).
+          example: 6
+
+    ClinicalEvaluationResponse:
+      type: object
+      description: Respuesta con datos de una evaluaciÃ³n clÃ­nica.
+      properties:
+        id:
+          type: string
+          format: uuid
+        deportistaId:
+          type: string
+          format: uuid
+        profesionalId:
+          type: string
+          format: uuid
+        fechaEvaluacion:
+          type: string
+          format: date-time
+        diagnostico:
+          type: string
+        observaciones:
+          type: string
+        rpe:
+          type: integer
+        version:
+          type: integer
+          format: int64
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    GymApprovalRequest:
+      type: object
+      description: Solicitud para crear o actualizar una aprobaciÃ³n de ingreso.
+      required:
+        - deportistaId
+        - medicoId
+        - estado
+        - tipoRestriccion
+      properties:
+        deportistaId:
+          type: string
+          format: uuid
+        medicoId:
+          type: string
+          format: uuid
+        estado:
+          $ref: '#/components/schemas/ApprovalStatus'
+        tipoRestriccion:
+          $ref: '#/components/schemas/AlertType'
+        observaciones:
+          type: string
+          maxLength: 500
+        fechaExpiracion:
+          type: string
+          format: date-time
+
+    GymApprovalResponse:
+      type: object
+      description: Respuesta con datos de una aprobaciÃ³n de ingreso.
+      properties:
+        id:
+          type: string
+          format: uuid
+        deportistaId:
+          type: string
+          format: uuid
+        medicoId:
+          type: string
+          format: uuid
+        estado:
+          $ref: '#/components/schemas/ApprovalStatus'
+        tipoRestriccion:
+          $ref: '#/components/schemas/AlertType'
+        observaciones:
+          type: string
+        fechaValidacion:
+          type: string
+          format: date-time
+        fechaExpiracion:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    MedicalRestrictionRequest:
+      type: object
+      description: Solicitud para crear o actualizar una restricciÃ³n mÃ©dica.
+      required:
+        - deportistaId
+        - clinicalEvaluationId
+        - restrictionType
+        - descripcion
+        - fechaInicio
+      properties:
+        deportistaId:
+          type: string
+          format: uuid
+        clinicalEvaluationId:
+          type: string
+          format: uuid
+        restrictionType:
+          $ref: '#/components/schemas/RestrictionType'
+        descripcion:
+          type: string
+          maxLength: 500
+        activa:
+          type: boolean
+          default: true
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+
+    MedicalRestrictionResponse:
+      type: object
+      description: Respuesta con datos de una restricciÃ³n mÃ©dica.
+      properties:
+        id:
+          type: string
+          format: uuid
+        deportistaId:
+          type: string
+          format: uuid
+        clinicalEvaluationId:
+          type: string
+          format: uuid
+        restrictionType:
+          $ref: '#/components/schemas/RestrictionType'
+        descripcion:
+          type: string
+        activa:
+          type: boolean
+        fechaInicio:
+          type: string
+          format: date-time
+        fechaFin:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    RiskAlertRequest:
+      type: object
+      description: Solicitud para crear o actualizar una alerta de riesgo.
+      required:
+        - deportistaId
+        - tipoAlerta
+        - nivelRiesgo
+      properties:
+        deportistaId:
+          type: string
+          format: uuid
+        tipoAlerta:
+          $ref: '#/components/schemas/AlertType'
+        nivelRiesgo:
+          $ref: '#/components/schemas/AlertLevel'
+        descripcion:
+          type: string
+          maxLength: 500
+        rpe:
+          type: integer
+          minimum: 0
+          maximum: 10
+        activa:
+          type: boolean
+          default: true
+
+    RiskAlertResponse:
+      type: object
+      description: Respuesta con datos de una alerta de riesgo.
+      properties:
+        id:
+          type: string
+          format: uuid
+        deportistaId:
+          type: string
+          format: uuid
+        tipoAlerta:
+          $ref: '#/components/schemas/AlertType'
+        nivelRiesgo:
+          $ref: '#/components/schemas/AlertLevel'
+        descripcion:
+          type: string
+        rpe:
+          type: integer
+        activa:
+          type: boolean
+        fechaDeteccion:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # MANAGEMENT ANALYTICS
+    # ============================================================
+    ManagementAnalyticsDashboardResponse:
+      type: object
+      description: Tablero consolidado de gestiÃ³n, analÃ­tica e impacto.
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        businessKpis:
+          $ref: '#/components/schemas/BusinessKpiAggregateResponse'
+        healthImpact:
+          $ref: '#/components/schemas/HealthImpactAggregateResponse'
+
+    BusinessKpiAggregateResponse:
+      type: object
+      description: KPIs agregados de negocio.
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        recordsAnalyzed:
+          type: integer
+          format: int64
+        dataAvailable:
+          type: boolean
+        averageActiveMemberships:
+          type: number
+          format: bigdecimal
+        averageRetentionRate:
+          type: number
+          format: bigdecimal
+        averageHourlyOccupancy:
+          type: number
+          format: bigdecimal
+        message:
+          type: string
+
+    HealthImpactAggregateResponse:
+      type: object
+      description: KPIs agregados de impacto en salud.
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        recordsAnalyzed:
+          type: integer
+          format: int64
+        dataAvailable:
+          type: boolean
+        clinicalImprovementPercentage:
+          type: number
+          format: bigdecimal
+        communityTraceabilityPercentage:
+          type: number
+          format: bigdecimal
+        message:
+          type: string
+
+    # ============================================================
+    # SMART NUTRITION
+    # ============================================================
+    PlanNutricionalDTO:
+      type: object
+      description: Plan nutricional.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+          maxLength: 255
+        objetivo:
+          type: string
+          maxLength: 500
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        caloriasObjetivo:
+          type: number
+          format: double
+          example: 2200.0
+
+    DetallePlanDTO:
+      type: object
+      description: Detalle de un plan nutricional.
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipoComida:
+          type: string
+          maxLength: 255
+          example: Almuerzo
+        cantidad:
+          type: number
+          format: double
+        observacion:
+          type: string
+          maxLength: 255
+        planNutricionalId:
+          type: string
+          format: uuid
+        alimentoId:
+          type: string
+          format: uuid
+
+    AlimentoDTO:
+      type: object
+      description: Alimento registrado en el sistema.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+          maxLength: 255
+        categoria:
+          type: string
+          maxLength: 255
+        calorias:
+          type: number
+          format: double
+        proteinas:
+          type: number
+          format: double
+        carbohidratos:
+          type: number
+          format: double
+        grasas:
+          type: number
+          format: double
+        porcion:
+          type: number
+          format: double
+
+    # ============================================================
+    # IoT - MÃ?QUINAS
+    # ============================================================
+    MaquinaRequestDTO:
+      type: object
+      description: Solicitud para crear una mÃ¡quina IoT.
+      required:
+        - nombre
+        - tipo
+        - ubicacion
+        - estadoConexion
+        - estadoCalibracion
+      properties:
+        nombre:
+          type: string
+          description: Nombre de la mÃ¡quina.
+          example: Cinta de correr 1
+        tipo:
+          type: string
+          description: Tipo de mÃ¡quina.
+          example: CARDIO
+        ubicacion:
+          type: string
+          description: UbicaciÃ³n de la mÃ¡quina.
+          example: Sala de cardio - Piso 1
+        estadoConexion:
+          $ref: '#/components/schemas/EstadoConexion'
+        estadoCalibracion:
+          $ref: '#/components/schemas/EstadoCalibracion'
+
+    MaquinaResponseDTO:
+      type: object
+      description: Respuesta con datos de una mÃ¡quina IoT.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        tipo:
+          type: string
+        ubicacion:
+          type: string
+        estadoConexion:
+          $ref: '#/components/schemas/EstadoConexion'
+        estadoCalibracion:
+          $ref: '#/components/schemas/EstadoCalibracion'
+        fechaUltimoMantenimiento:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # IoT - TELEMETRÃÍA
+    # ============================================================
+    LecturaTelemetriaRequestDTO:
+      type: object
+      description: Solicitud para registrar una lectura de telemetrÃ­a.
+      required:
+        - tipoDato
+        - valor
+        - unidad
+        - origen
+        - capturadoEn
+      properties:
+        maquinaId:
+          type: string
+          format: uuid
+        usuarioId:
+          type: string
+          format: uuid
+        tipoDato:
+          $ref: '#/components/schemas/TipoDato'
+        valor:
+          type: number
+          format: bigdecimal
+        unidad:
+          type: string
+          example: rpm
+        origen:
+          $ref: '#/components/schemas/OrigenDato'
+        capturadoEn:
+          type: string
+          format: date-time
+
+    LecturaTelemetriaResponseDTO:
+      type: object
+      description: Respuesta con datos de una lectura de telemetrÃ­a.
+      properties:
+        id:
+          type: string
+          format: uuid
+        maquinaId:
+          type: string
+          format: uuid
+        usuarioId:
+          type: string
+          format: uuid
+        tipoDato:
+          $ref: '#/components/schemas/TipoDato'
+        valor:
+          type: number
+          format: bigdecimal
+        unidad:
+          type: string
+        origen:
+          $ref: '#/components/schemas/OrigenDato'
+        capturadoEn:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # IoT - ALERTAS DE MANTENIMIENTO
+    # ============================================================
+    AlertaMantenimientoRequestDTO:
+      type: object
+      description: Solicitud para registrar una alerta de mantenimiento.
+      required:
+        - maquinaId
+        - tipoAlerta
+        - descripcion
+      properties:
+        maquinaId:
+          type: string
+          format: uuid
+        tipoAlerta:
+          $ref: '#/components/schemas/TipoAlerta'
+        descripcion:
+          type: string
+
+    AlertaMantenimientoResponseDTO:
+      type: object
+      description: Respuesta con datos de una alerta de mantenimiento.
+      properties:
+        id:
+          type: string
+          format: uuid
+        maquinaId:
+          type: string
+          format: uuid
+        tipoAlerta:
+          $ref: '#/components/schemas/TipoAlerta'
+        descripcion:
+          type: string
+        estado:
+          $ref: '#/components/schemas/EstadoAlerta'
+        creadoEn:
+          type: string
+          format: date-time
+
+    EstadoAlertaUpdateRequestDTO:
+      type: object
+      description: Solicitud para actualizar el estado de una alerta.
+      required:
+        - estado
+      properties:
+        estado:
+          $ref: '#/components/schemas/EstadoAlerta'
+
+    # ============================================================
+    # IoT - REGISTRO DE FATIGA
+    # ============================================================
+    RegistroFatigaRequestDTO:
+      type: object
+      description: Solicitud para calcular el nivel de fatiga de un usuario.
+      required:
+        - usuarioId
+      properties:
+        usuarioId:
+          type: string
+          format: uuid
+
+    RegistroFatigaResponseDTO:
+      type: object
+      description: Respuesta con el nivel de fatiga calculado.
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioId:
+          type: string
+          format: uuid
+        nivelFatiga:
+          type: integer
+          description: Nivel de fatiga del usuario (0-100).
+          example: 65
+        recomendacion:
+          type: string
+          example: Reducir intensidad del entrenamiento
+        calculadoEn:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # IoT - PAGED RESPONSE
+    # ============================================================
+    PagedResponse:
+      type: object
+      description: Respuesta paginada genÃ©rica.
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        last:
+          type: boolean
+        first:
+          type: boolean
+        empty:
+          type: boolean
+
+    # ============================================================
+    # EXERGAMES
+    # ============================================================
+    SesionExergameRequestDTO:
+      type: object
+      description: Solicitud para registrar una sesiÃ³n de exergame.
+      required:
+        - usuarioId
+        - estacionId
+        - iniciadoEn
+        - origen
+      properties:
+        usuarioId:
+          type: string
+          format: uuid
+        estacionId:
+          type: string
+          format: uuid
+        iniciadoEn:
+          type: string
+          format: date-time
+        duracionSegundos:
+          type: integer
+        metricaCardio:
+          type: number
+          format: bigdecimal
+        metricaCoordinacion:
+          type: number
+          format: bigdecimal
+        metricaEquilibrio:
+          type: number
+          format: bigdecimal
+        origen:
+          $ref: '#/components/schemas/OrigenDato'
+
+    SesionExergameResponseDTO:
+      type: object
+      description: Respuesta con datos de una sesiÃ³n de exergame.
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioId:
+          type: string
+          format: uuid
+        estacionId:
+          type: string
+          format: uuid
+        iniciadoEn:
+          type: string
+          format: date-time
+        duracionSegundos:
+          type: integer
+        metricaCardio:
+          type: number
+          format: bigdecimal
+        metricaCoordinacion:
+          type: number
+          format: bigdecimal
+        metricaEquilibrio:
+          type: number
+          format: bigdecimal
+        origen:
+          $ref: '#/components/schemas/OrigenDato'
+
+    EstacionXrRequestDTO:
+      type: object
+      description: Solicitud para crear una estaciÃ³n XR.
+      required:
+        - nombre
+        - tipoJuego
+        - estadoConexion
+      properties:
+        nombre:
+          type: string
+        tipoJuego:
+          $ref: '#/components/schemas/TipoJuego'
+        estadoConexion:
+          $ref: '#/components/schemas/EstadoConexion'
+
+    EstacionXrResponseDTO:
+      type: object
+      description: Respuesta con datos de una estaciÃ³n XR.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        tipoJuego:
+          $ref: '#/components/schemas/TipoJuego'
+        estadoConexion:
+          $ref: '#/components/schemas/EstadoConexion'
+
+    ProtocoloSeguridadResponseDTO:
+      type: object
+      description: Protocolo de seguridad aplicable a un usuario.
+      properties:
+        id:
+          type: string
+          format: uuid
+        poblacionObjetivo:
+          $ref: '#/components/schemas/PoblacionObjetivo'
+        restricciones:
+          type: string
+
+    DesafioRequestDTO:
+      type: object
+      description: Solicitud para crear un desafÃ­o.
+      required:
+        - nombre
+        - tipo
+        - fechaInicio
+        - fechaFin
+      properties:
+        nombre:
+          type: string
+        tipo:
+          $ref: '#/components/schemas/TipoDesafio'
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        criterioPuntaje:
+          type: string
+
+    DesafioResponseDTO:
+      type: object
+      description: Respuesta con datos de un desafÃ­o.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        tipo:
+          $ref: '#/components/schemas/TipoDesafio'
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        criterioPuntaje:
+          type: string
+
+    PuntajeRankingRequestDTO:
+      type: object
+      description: Solicitud para registrar un puntaje en un desafÃ­o.
+      required:
+        - usuarioId
+        - desafioId
+        - puntaje
+      properties:
+        usuarioId:
+          type: string
+          format: uuid
+        desafioId:
+          type: string
+          format: uuid
+        puntaje:
+          type: number
+          format: bigdecimal
+          example: 95.5
+
+    PuntajeRankingResponseDTO:
+      type: object
+      description: Respuesta con datos de un puntaje en el ranking.
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioId:
+          type: string
+          format: uuid
+        desafioId:
+          type: string
+          format: uuid
+        puntaje:
+          type: number
+          format: bigdecimal
+        posicion:
+          type: integer
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # AI PRESCRIPTION - EJERCICIOS
+    # ============================================================
+    CreateEjercicioRequest:
+      type: object
+      description: Solicitud para crear un ejercicio.
+      required:
+        - nombreEjercicio
+        - grupoMuscular
+        - categoriaEjercicio
+        - dificultadEjercicio
+        - tipoEjercicio
+      properties:
+        nombreEjercicio:
+          type: string
+        descripcionEjercicio:
+          type: string
+        instrucciones:
+          type: string
+        grupoMuscular:
+          $ref: '#/components/schemas/GrupoMuscular'
+        categoriaEjercicio:
+          $ref: '#/components/schemas/CategoriaEjercicio'
+        dificultadEjercicio:
+          $ref: '#/components/schemas/DificultadEjercicio'
+        tipoEjercicio:
+          $ref: '#/components/schemas/TipoEjercicioAI'
+        equipamiento:
+          type: string
+        duracionEstimadaMinutos:
+          type: integer
+        caloriasEstimadas:
+          type: integer
+
+    UpdateEjercicioRequest:
+      type: object
+      description: Solicitud para actualizar un ejercicio.
+      properties:
+        nombreEjercicio:
+          type: string
+        descripcionEjercicio:
+          type: string
+        instrucciones:
+          type: string
+        grupoMuscular:
+          $ref: '#/components/schemas/GrupoMuscular'
+        categoria:
+          $ref: '#/components/schemas/CategoriaEjercicio'
+        dificultad:
+          $ref: '#/components/schemas/DificultadEjercicio'
+        tipoEjercicio:
+          $ref: '#/components/schemas/TipoEjercicioAI'
+        equipamiento:
+          type: string
+        duracionEstimadaMinutos:
+          type: integer
+        caloriasEstimadas:
+          type: integer
+        activo:
+          type: boolean
+
+    EjercicioResponse:
+      type: object
+      description: Respuesta con datos de un ejercicio.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombreEjercicio:
+          type: string
+        descripcionEjercicio:
+          type: string
+        instrucciones:
+          type: string
+        grupoMuscular:
+          $ref: '#/components/schemas/GrupoMuscular'
+        categoria:
+          $ref: '#/components/schemas/CategoriaEjercicio'
+        dificultad:
+          $ref: '#/components/schemas/DificultadEjercicio'
+        tipoEjercicio:
+          $ref: '#/components/schemas/TipoEjercicioAI'
+        equipamiento:
+          type: string
+        duracionEstimadaMinutos:
+          type: integer
+        caloriasEstimadas:
+          type: integer
+        activo:
+          type: boolean
+        fechaCreacion:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # AI PRESCRIPTION - PLANTILLAS
+    # ============================================================
+    CreatePlantillaRutinaRequest:
+      type: object
+      description: Solicitud para crear una plantilla de rutina.
+      required:
+        - nombrePlantilla
+      properties:
+        nombrePlantilla:
+          type: string
+        descripcionPlantilla:
+          type: string
+        objetivo:
+          $ref: '#/components/schemas/ObjetivoPlantilla'
+        dificultad:
+          $ref: '#/components/schemas/DificultadEjercicio'
+        duracionEstimadaMinutos:
+          type: integer
+        activo:
+          type: boolean
+
+    UpdatePlantillaRutinaRequest:
+      type: object
+      description: Solicitud para actualizar una plantilla de rutina.
+      properties:
+        nombrePlantilla:
+          type: string
+        descripcionPlantilla:
+          type: string
+        objetivo:
+          $ref: '#/components/schemas/ObjetivoPlantilla'
+        dificultad:
+          $ref: '#/components/schemas/DificultadEjercicio'
+        duracionEstimadaMinutos:
+          type: integer
+        activo:
+          type: boolean
+
+    PlantillaRutinaResponse:
+      type: object
+      description: Respuesta con datos de una plantilla de rutina.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombrePlantilla:
+          type: string
+        descripcionPlantilla:
+          type: string
+        objetivo:
+          $ref: '#/components/schemas/ObjetivoPlantilla'
+        dificultad:
+          $ref: '#/components/schemas/DificultadEjercicio'
+        duracionEstimadaMinutos:
+          type: integer
+        activo:
+          type: boolean
+        fechaCreacion:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # AI PRESCRIPTION - PLANES
+    # ============================================================
+    CreatePlanEntrenamientoRequest:
+      type: object
+      description: Solicitud para crear un plan de entrenamiento.
+      required:
+        - deportistaId
+        - generadoPorIA
+        - objetivo
+        - fechaInicio
+        - fechaFin
+        - estado
+      properties:
+        deportistaId:
+          type: string
+          format: uuid
+        plantillaRutinaId:
+          type: string
+          format: uuid
+        generadoPorIA:
+          type: boolean
+        objetivo:
+          $ref: '#/components/schemas/ObjetivoPlantilla'
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estado:
+          $ref: '#/components/schemas/EstadoPlan'
+
+    UpdatePlanEntrenamientoRequest:
+      type: object
+      description: Solicitud para actualizar un plan de entrenamiento.
+      properties:
+        deportistaId:
+          type: string
+          format: uuid
+        plantillaRutinaId:
+          type: string
+          format: uuid
+        generadoPorIA:
+          type: boolean
+        objetivo:
+          $ref: '#/components/schemas/ObjetivoPlantilla'
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estado:
+          $ref: '#/components/schemas/EstadoPlan'
+
+    PlanEntrenamientoResponse:
+      type: object
+      description: Respuesta con datos de un plan de entrenamiento.
+      properties:
+        id:
+          type: string
+          format: uuid
+        deportistaId:
+          type: string
+          format: uuid
+        plantillaRutinaId:
+          type: string
+          format: uuid
+        generadoPorIA:
+          type: boolean
+        objetivo:
+          $ref: '#/components/schemas/ObjetivoPlantilla'
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estado:
+          $ref: '#/components/schemas/EstadoPlan'
+
+    # ============================================================
+    # AGENDAMIENTO - SLOTS
+    # ============================================================
+    SlotHorarioResponseDTO:
+      type: object
+      description: Slot horario disponible para reserva.
+      properties:
+        id:
+          type: string
+          format: uuid
+        espacioId:
+          type: string
+          format: uuid
+        fecha:
+          type: string
+          format: date
+        horaInicio:
+          type: string
+          format: time
+          example: "08:00:00"
+        horaFin:
+          type: string
+          format: time
+          example: "09:00:00"
+        cuposTotales:
+          type: integer
+        cuposDisponibles:
+          type: integer
+        estado:
+          $ref: '#/components/schemas/EstadoSlot'
+
+    # ============================================================
+    # AGENDAMIENTO - RESERVAS
+    # ============================================================
+    ReservaRequestDTO:
+      type: object
+      description: Solicitud para crear una reserva.
+      required:
+        - usuarioId
+        - slotId
+      properties:
+        usuarioId:
+          type: string
+          format: uuid
+        slotId:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+
+    ReservaResponseDTO:
+      type: object
+      description: Respuesta con datos de una reserva.
+      properties:
+        id:
+          type: string
+          format: uuid
+        usuarioId:
+          type: string
+          format: uuid
+        slotId:
+          type: string
+          format: uuid
+        tipo:
+          $ref: '#/components/schemas/TipoReserva'
+        estado:
+          $ref: '#/components/schemas/EstadoReserva'
+        creadoEn:
+          type: string
+          format: date-time
+
+    # ============================================================
+    # AGENDAMIENTO - ESPACIOS
+    # ============================================================
+    EspacioZonaRequestDTO:
+      type: object
+      description: Solicitud para crear un espacio o zona.
+      required:
+        - nombre
+        - tipo
+        - capacidadMaxima
+      properties:
+        nombre:
+          type: string
+        tipo:
+          $ref: '#/components/schemas/TipoEspacio'
+        capacidadMaxima:
+          type: integer
+          minimum: 1
+
+    EspacioZonaResponseDTO:
+      type: object
+      description: Respuesta con datos de un espacio o zona.
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        tipo:
+          $ref: '#/components/schemas/TipoEspacio'
+        capacidadMaxima:
+          type: integer
+
+    RegistroAforoRequestDTO:
+      type: object
+      description: Solicitud para registrar un conteo de aforo.
+      required:
+        - espacioId
+        - conteoActual
+      properties:
+        espacioId:
+          type: string
+          format: uuid
+        conteoActual:
+          type: integer
+          minimum: 0
+
+    RegistroAforoResponseDTO:
+      type: object
+      description: Respuesta con el conteo de aforo actual.
+      properties:
+        id:
+          type: string
+          format: uuid
+        espacioId:
+          type: string
+          format: uuid
+        medidoEn:
+          type: string
+          format: date-time
+        conteoActual:
+          type: integer
+
+    # ============================================================
+    # AGENDAMIENTO - CITAS DE SALUD
+    # ============================================================
+    CitaSaludRequestDTO:
+      type: object
+      description: Solicitud para crear una cita de salud.
+      required:
+        - reservaId
+        - especialistaId
+        - tipoEspecialista
+        - motivo
+      properties:
+        reservaId:
+          type: string
+          format: uuid
+        especialistaId:
+          type: string
+          format: uuid
+        tipoEspecialista:
+          type: string
+        motivo:
+          type: string
+
+    CitaSaludResponseDTO:
+      type: object
+      description: Respuesta con datos de una cita de salud.
+      properties:
+        id:
+          type: string
+          format: uuid
+        reservaId:
+          type: string
+          format: uuid
+        especialistaId:
+          type: string
+          format: uuid
+        tipoEspecialista:
+          type: string
+        motivo:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

@@ -44,8 +44,9 @@
   --sg-shadow-sm: 0 1px 2px rgb(19 20 22 / 6%);
   --sg-shadow-md: 0 10px 28px rgb(19 20 22 / 10%);
 
-  /* Tipografía: una sola familia (Archivo Variable), pesos y anchos como voz */
-  --sg-font: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Tipografía: una sola familia (Poppins, la misma del sitio institucional
+     UCACUE — tema Divi), pesos estáticos 400/500/600/700 como voz */
+  --sg-font: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* Layout del shell */
   --sg-sidenav-width: 256px;

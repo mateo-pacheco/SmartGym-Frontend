@@ -1,6 +1,8 @@
 import { PageHeader } from '../../components/navigation/PageHeader'
+import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
+import { ModuleGate } from '../../components/feedback/ModuleGate'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 
 /* Planes y revisión humana: estado, revisor, versión y siguiente paso.
@@ -18,8 +20,11 @@ export default function PlanesPage() {
         ]}
       />
 
+      <ModuleGate contract="Planes y revisión humana" />
+
       <div className="row g-4">
         <div className="col-lg-8">
+          <h2 className="sg-section-title">Cola de revisión</h2>
           <DataTable
             caption="Cola de revisión de planes pendientes de decisión humana"
             columns={[
@@ -34,16 +39,15 @@ export default function PlanesPage() {
             emptyState={
               <NoContractState
                 illustration="plan"
-                moduleName="La cola de revisión"
-                detail="Aprobar, rechazar o pedir cambios dejará trazabilidad del revisor y su decisión."
-                contract="Planes y revisión humana"
-                expectedAction="aprobar, rechazar o pedir cambios con registro del revisor."
+                title="No hay planes en revisión"
+                body="Aprobar, rechazar o pedir cambios dejará registro del revisor y su decisión."
               />
             }
           />
         </div>
         <div className="col-lg-4">
-          <h2 className="fs-6 fw-semibold mb-3">Estados de revisión</h2>
+          <MotionEffect fade slide={{ direction: 'right', offset: 18 }} delay={0.18}>
+          <h2 className="sg-section-title">Estados de revisión</h2>
           <dl className="sg-deflist sg-surface--inset p-3">
             <div>
               <dt>En borrador</dt>
@@ -62,6 +66,7 @@ export default function PlanesPage() {
               <dd><StatusBadge tone="success" label="Aprobado" /></dd>
             </div>
           </dl>
+          </MotionEffect>
         </div>
       </div>
     </>

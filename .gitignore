@@ -6,3 +6,21 @@ dist-ssr
 .vscode
 *.tsbuildinfo
 coverage
+
+# Carpetas de asistentes de IA / tooling — nunca se publican
+.agents/
+.codex/
+.claude/
+
+# Variables de entorno (se conserva solo el ejemplo)
+.env
+.env.*
+!.env.example
+
+# Media suelta y capturas en la raíz del repo
+# (los assets reales viven en public/ y src/assets/)
+/*.jpeg
+/*.jpg
+/*.png
+/*.mp4
+/*.mov

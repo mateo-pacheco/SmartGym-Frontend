@@ -1,0 +1,120 @@
+/* Velo de ingreso a la plataforma: color de marca pleno (estilo k95.it)
+   con la bicicleta pedaleando en blanco. Solo clip-path/opacity/transform. */
+
+.sg-enter-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  background: var(--sg-brand-strong);
+  color: #fff;
+  will-change: clip-path;
+}
+
+.sg-enter-veil__content {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.sg-enter-veil__bike {
+  width: clamp(132px, 20vw, 180px);
+}
+
+.sg-enter-veil__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 85%);
+}
+
+/* ---------- Bicicleta: trazos y giros ---------- */
+.sg-bike {
+  display: block;
+  height: auto;
+  overflow: visible;
+  color: #fff;
+}
+
+.sg-bike__body,
+.sg-bike__front,
+.sg-bike__handlebars,
+.sg-bike__pedals,
+.sg-bike__pedals-spin,
+.sg-bike__seat,
+.sg-bike__spokes,
+.sg-bike__spokes-spin,
+.sg-bike__tire {
+  animation: sg-bike-body 3s ease-in-out infinite;
+  stroke: currentColor;
+}
+
+.sg-bike__front { animation-name: sg-bike-front; }
+.sg-bike__handlebars { animation-name: sg-bike-handlebars; }
+.sg-bike__pedals { animation-name: sg-bike-pedals; }
+.sg-bike__pedals-spin { animation-name: sg-bike-pedals-spin; }
+.sg-bike__seat { animation-name: sg-bike-seat; }
+.sg-bike__spokes { animation-name: sg-bike-spokes; }
+.sg-bike__spokes-spin { animation-name: sg-bike-spokes-spin; }
+.sg-bike__tire { animation-name: sg-bike-tire; }
+
+@keyframes sg-bike-body {
+  from { stroke-dashoffset: 79; }
+  33%, 67% { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -79; }
+}
+
+@keyframes sg-bike-front {
+  from { stroke-dashoffset: 19; }
+  33%, 67% { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -19; }
+}
+
+@keyframes sg-bike-handlebars {
+  from { stroke-dashoffset: 10; }
+  33%, 67% { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -10; }
+}
+
+@keyframes sg-bike-pedals {
+  from { animation-timing-function: ease-in; stroke-dashoffset: -25.133; }
+  33%, 67% { animation-timing-function: ease-out; stroke-dashoffset: -21.991; }
+  to { stroke-dashoffset: -25.133; }
+}
+
+@keyframes sg-bike-pedals-spin {
+  from { transform: rotate(0.1875turn); }
+  to { transform: rotate(3.1875turn); }
+}
+
+@keyframes sg-bike-seat {
+  from { stroke-dashoffset: 5; }
+  33%, 67% { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -5; }
+}
+
+@keyframes sg-bike-spokes {
+  from { animation-timing-function: ease-in; stroke-dashoffset: -31.416; }
+  33%, 67% { animation-timing-function: ease-out; stroke-dashoffset: -23.562; }
+  to { stroke-dashoffset: -31.416; }
+}
+
+@keyframes sg-bike-spokes-spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(3turn); }
+}
+
+@keyframes sg-bike-tire {
+  from { animation-timing-function: ease-in; stroke-dashoffset: 56.549; transform: rotate(0); }
+  33% { stroke-dashoffset: 0; transform: rotate(0.33turn); }
+  67% { animation-timing-function: ease-out; stroke-dashoffset: 0; transform: rotate(0.67turn); }
+  to { stroke-dashoffset: -56.549; transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-bike * {
+    animation: none !important;
+  }
+}

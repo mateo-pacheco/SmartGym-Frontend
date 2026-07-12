@@ -1,8 +1,10 @@
 import { EmptyState } from '../../components/feedback/EmptyState'
 import { AppButton } from '../../components/actions/AppButton'
 import { Icon } from '../../components/icons/Icon'
+import { usePageMeta } from '../../lib/usePageMeta'
 
 export default function NotFoundPage() {
+  usePageMeta('Página no encontrada · SmartGym UCACUE')
   return (
     <div className="d-grid align-content-center" style={{ minHeight: '60vh' }}>
       <EmptyState

@@ -1,7 +1,9 @@
 /* Cliente API de SmartGym.
-   Regla (AGENTS.md §16): no se inventan endpoints, campos ni datos.
-   Mientras el backend no publique un contrato confirmado (OpenAPI/tipos),
-   la app declara explícitamente el estado "sin contrato". */
+   El contrato del backend está CONFIRMADO en `openapi.yaml` (SmartGym API
+   v1.0.0): tipos en ./types.ts, transporte en ./http.ts y funciones por
+   módulo en ./endpoints.ts. La conexión, sin embargo, sigue siendo opcional:
+   sin VITE_SMARTGYM_API_URL la app declara el estado "sin conexión" y no
+   inventa datos (AGENTS.md §16). */
 
 export type ContractStatus = 'sin-contrato' | 'configurado'
 

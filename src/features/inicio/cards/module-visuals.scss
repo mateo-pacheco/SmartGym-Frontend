@@ -1,0 +1,701 @@
+/* Visuales de módulo con forma propia. Comparten solo el tilt 3D. */
+.sgm-visual-tilt {
+  width: min(380px, 100%);
+  height: 320px;
+  container-type: inline-size;
+}
+
+/* ---------- Telemetría: loader original ---------- */
+.sgm-iot-standalone {
+  width: 150px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+}
+
+.sgm-wifi-loader {
+  --wifi-front: var(--sg-brand);
+  --wifi-back: var(--sg-border-strong);
+  --wifi-text: var(--sg-text-secondary);
+
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: visible;
+  transform: translateZ(28px) scale(1.18);
+}
+
+.sgm-wifi-loader svg {
+  position: absolute;
+  display: block;
+  overflow: visible;
+}
+
+.sgm-wifi-loader circle {
+  fill: none;
+  stroke-width: 6px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(-100deg);
+  transform-origin: center;
+}
+
+.sgm-wifi-loader circle.back {
+  stroke: var(--wifi-back);
+}
+
+.sgm-wifi-loader circle.front {
+  stroke: var(--wifi-front);
+}
+
+.sgm-wifi-loader circle.new {
+  stroke: transparent;
+}
+
+.sgm-wifi-loader__outer {
+  width: 86px;
+  height: 86px;
+}
+
+.sgm-wifi-loader__outer circle {
+  stroke-dasharray: 62.75 188.25;
+}
+
+.sgm-wifi-loader__outer circle.back {
+  animation: sgm-wifi-outer 1.8s ease infinite 0.3s;
+}
+
+.sgm-wifi-loader__outer circle.front {
+  animation: sgm-wifi-outer 1.8s ease infinite 0.15s;
+}
+
+.sgm-wifi-loader__middle {
+  width: 60px;
+  height: 60px;
+}
+
+.sgm-wifi-loader__middle circle {
+  stroke-dasharray: 42.5 127.5;
+}
+
+.sgm-wifi-loader__middle circle.back {
+  animation: sgm-wifi-middle 1.8s ease infinite 0.25s;
+}
+
+.sgm-wifi-loader__middle circle.front {
+  animation: sgm-wifi-middle 1.8s ease infinite 0.1s;
+}
+
+.sgm-wifi-loader__inner {
+  width: 34px;
+  height: 34px;
+}
+
+.sgm-wifi-loader__inner circle {
+  stroke-dasharray: 22 66;
+}
+
+.sgm-wifi-loader__inner circle.back {
+  animation: sgm-wifi-inner 1.8s ease infinite 0.2s;
+}
+
+.sgm-wifi-loader__inner circle.front {
+  animation: sgm-wifi-inner 1.8s ease infinite 0.05s;
+}
+
+.sgm-wifi-loader__text {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  width: max-content;
+  color: var(--wifi-text);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  transform: translateX(-50%);
+}
+
+.sgm-wifi-loader__text::before,
+.sgm-wifi-loader__text::after {
+  content: attr(data-text);
+}
+
+.sgm-wifi-loader__text::after {
+  position: absolute;
+  left: 0;
+  color: var(--wifi-front);
+  animation: sgm-wifi-text 3.6s ease infinite;
+}
+
+@keyframes sgm-wifi-outer {
+  0% {
+    stroke-dashoffset: 25;
+  }
+  25% {
+    stroke-dashoffset: 0;
+  }
+  65% {
+    stroke-dashoffset: 301;
+  }
+  80%,
+  100% {
+    stroke-dashoffset: 276;
+  }
+}
+
+@keyframes sgm-wifi-middle {
+  0% {
+    stroke-dashoffset: 17;
+  }
+  25% {
+    stroke-dashoffset: 0;
+  }
+  65% {
+    stroke-dashoffset: 204;
+  }
+  80%,
+  100% {
+    stroke-dashoffset: 187;
+  }
+}
+
+@keyframes sgm-wifi-inner {
+  0% {
+    stroke-dashoffset: 9;
+  }
+  25% {
+    stroke-dashoffset: 0;
+  }
+  65% {
+    stroke-dashoffset: 106;
+  }
+  80%,
+  100% {
+    stroke-dashoffset: 97;
+  }
+}
+
+@keyframes sgm-wifi-text {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  50% {
+    clip-path: inset(0);
+  }
+  100% {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* ---------- Riesgo médico: composición fitness original ---------- */
+/* La card define su propia altura; el contenedor no la recorta. */
+.sgm-visual-tilt--medical {
+  height: auto;
+  min-height: 320px;
+}
+
+.sgm-fit-health {
+  --fit-shell: color-mix(in srgb, var(--sg-brand) 6%, var(--sg-surface));
+  --fit-panel: var(--sg-surface-raised);
+  --fit-line: var(--sg-border);
+  --fit-accent: var(--sg-brand);
+  --fit-track: color-mix(in srgb, var(--sg-brand) 18%, var(--sg-border));
+  --fit-text: var(--sg-text-primary);
+
+  /* Proporciones del diseño original: padding y gap de 0.5rem,
+     filas header / overview / métricas / cita. */
+  width: 248px;
+  padding: 8px;
+  display: grid;
+  grid-template-rows: 48px 148px 56px 60px;
+  gap: 8px;
+  color: var(--fit-accent);
+  background: var(--fit-shell);
+  border: 1px solid var(--fit-line);
+  border-radius: 18px;
+  box-shadow: var(--sg-shadow-md);
+  overflow: hidden;
+}
+
+.sgm-fit__panel {
+  background: var(--fit-panel);
+  border: 1px solid var(--fit-line);
+  border-radius: 12px;
+}
+
+.sgm-fit__header {
+  padding-inline: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sgm-fit__header strong {
+  color: var(--fit-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sgm-fit__overview {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.sgm-fit__gauge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* Como el original: el anillo ocupa 9/10 del panel, centrado con un leve
+   desplazamiento vertical; nunca se recorta. */
+.sgm-fit__gauge svg {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 6px);
+  width: 128px;
+  height: 128px;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+}
+
+.sgm-fit__gauge path {
+  fill: none;
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.sgm-fit__gauge-track {
+  stroke: var(--fit-track);
+}
+
+.sgm-fit__gauge-progress {
+  stroke: var(--fit-accent);
+  stroke-dasharray: 100;
+  stroke-dashoffset: -98;
+  transition: stroke-dashoffset 1s var(--sg-ease-product);
+}
+
+.sgm-fit__gauge span {
+  position: absolute;
+  bottom: 10px;
+  color: var(--fit-text);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.sgm-fit-health:hover .sgm-fit__gauge-progress {
+  stroke-dashoffset: 0;
+}
+
+.sgm-fit__metric-stack,
+.sgm-fit__metric-row {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sgm-fit__metric-stack {
+  grid-template-rows: 1fr 1fr;
+}
+
+.sgm-fit__metric-row {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.sgm-fit__metric {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--fit-accent);
+  overflow: hidden;
+}
+
+/* Intercambio icono ↔ valor con las distancias del diseño original:
+   icono sube a -300%, el valor entra desde 150%. */
+.sgm-fit__metric-icon,
+.sgm-fit__metric-value {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  transition: transform 300ms var(--sg-ease-product);
+}
+
+.sgm-fit__metric-value {
+  width: 100%;
+  color: var(--fit-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  transform: translate(-50%, 250%);
+}
+
+.sgm-fit__metric:hover .sgm-fit__metric-icon {
+  transform: translate(-50%, -300%);
+}
+
+.sgm-fit__metric:hover .sgm-fit__metric-value {
+  transform: translate(-50%, -50%);
+}
+
+.sgm-fit__quote {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--fit-text);
+  overflow: hidden;
+}
+
+.sgm-fit__quote strong,
+.sgm-fit__quote span {
+  position: absolute;
+  width: max-content;
+  font-size: 10px;
+  font-weight: 700;
+  transition: transform 500ms var(--sg-ease-product);
+}
+
+.sgm-fit__quote span {
+  color: var(--fit-accent);
+  font-size: 8px;
+  transform: translateX(170%);
+}
+
+.sgm-fit__quote:hover strong {
+  transform: translateX(-260%);
+}
+
+.sgm-fit__quote:hover span {
+  transform: translateX(0);
+}
+
+/* ---------- Agenda: hora y nube expansible ---------- */
+.sgm-visual-tilt--agenda {
+  align-items: start;
+  padding-top: 40px;
+  box-sizing: border-box;
+}
+
+.sgm-agenda-cloud {
+  --agenda-accent: var(--sg-brand);
+  --agenda-sky: var(--sg-surface-raised);
+  /* Suelo de la escena: teñido con el acento para que pertenezca a la card
+     en vez de leerse como una franja blanca (claro) o negra (oscuro). */
+  --agenda-front-top: color-mix(in srgb, var(--agenda-accent) 16%, var(--sg-surface));
+  --agenda-front-bottom: color-mix(in srgb, var(--agenda-accent) 7%, var(--sg-surface));
+  --agenda-text: var(--sg-text-primary);
+
+  width: min(280px, 88cqw);
+  height: 128px;
+  color: var(--agenda-accent);
+  background: var(--agenda-sky);
+  border: 2px solid var(--agenda-accent);
+  border-radius: 16px;
+  box-shadow: 0 0 0 color-mix(in srgb, var(--agenda-accent) 34%, transparent);
+  overflow: hidden;
+  transition:
+    height 500ms var(--sg-ease-product),
+    box-shadow 500ms var(--sg-ease-product);
+}
+
+.sgm-agenda-cloud:hover {
+  height: 240px;
+  box-shadow: 0 12px 0 color-mix(in srgb, var(--agenda-accent) 34%, transparent);
+}
+
+.sgm-agenda-cloud__front {
+  position: absolute;
+  z-index: 2;
+  top: 95%;
+  left: 50%;
+  width: 320px;
+  height: 200px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--agenda-front-top), var(--agenda-front-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--agenda-accent) 35%, transparent);
+  transform: translate(-50%, -50%);
+  transition: top 500ms var(--sg-ease-product);
+}
+
+.sgm-agenda-cloud:hover .sgm-agenda-cloud__front {
+  top: 105%;
+}
+
+.sgm-agenda-cloud__back {
+  position: absolute;
+  z-index: 1;
+  top: 57.5%;
+  left: 50%;
+  width: 320px;
+  height: 280px;
+  border-radius: 16px;
+  background: var(--agenda-sky);
+  transform: translate(-50%, -50%);
+}
+
+.sgm-agenda-cloud__back svg {
+  position: absolute;
+  z-index: 1;
+  top: -264px;
+  left: -120px;
+  width: 400px;
+  height: auto;
+  color: var(--agenda-accent);
+  opacity: 1;
+  animation: sgm-agenda-cloud-spin 15s linear infinite;
+}
+
+.sgm-agenda-cloud__back svg:nth-child(2) {
+  opacity: 0.5;
+  animation-delay: 1s;
+}
+
+.sgm-agenda-cloud__back path {
+  fill: currentColor;
+}
+
+.sgm-agenda-cloud__day,
+.sgm-agenda-cloud__date,
+.sgm-agenda-cloud__hour {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  color: var(--agenda-accent);
+  transition:
+    top 500ms var(--sg-ease-product),
+    font-size 500ms var(--sg-ease-product);
+}
+
+.sgm-agenda-cloud__day {
+  top: 20px;
+  left: 10px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.sgm-agenda-cloud__date {
+  top: 56px;
+  left: 11px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sgm-agenda-cloud__hour {
+  top: 20px;
+  right: 10px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.sgm-agenda-cloud:hover .sgm-agenda-cloud__day {
+  top: 36px;
+}
+
+.sgm-agenda-cloud:hover .sgm-agenda-cloud__date {
+  top: 70px;
+}
+
+.sgm-agenda-cloud:hover .sgm-agenda-cloud__hour {
+  top: 16px;
+  font-size: 46px;
+}
+
+.sgm-agenda-cloud__icon {
+  position: absolute;
+  z-index: 4;
+  top: 64px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  color: var(--agenda-accent);
+  transition:
+    top 500ms var(--sg-ease-product),
+    right 500ms var(--sg-ease-product),
+    width 500ms var(--sg-ease-product),
+    height 500ms var(--sg-ease-product),
+    transform 500ms var(--sg-ease-product);
+}
+
+.sgm-agenda-cloud__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.sgm-agenda-cloud:hover .sgm-agenda-cloud__icon {
+  top: 116px;
+  right: -28px;
+  width: 120px;
+  height: 120px;
+  transform: rotate(-35deg);
+}
+
+.sgm-agenda-cloud__capacity {
+  position: absolute;
+  z-index: 5;
+  top: 148px;
+  left: 14px;
+  display: grid;
+  gap: 4px;
+  color: var(--agenda-text);
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 300ms ease 120ms,
+    transform 400ms var(--sg-ease-product) 120ms;
+}
+
+.sgm-agenda-cloud__capacity span {
+  color: var(--sg-text-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.sgm-agenda-cloud__capacity strong {
+  max-width: 16ch;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.sgm-agenda-cloud__capacity i {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.sgm-agenda-cloud__capacity b {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--agenda-accent);
+}
+
+.sgm-agenda-cloud__capacity b:last-child {
+  background: var(--sg-border-strong);
+}
+
+.sgm-agenda-cloud:hover .sgm-agenda-cloud__capacity {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes sgm-agenda-cloud-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .sgm-visual-tilt {
+    height: 280px;
+  }
+
+  .sgm-fit-health {
+    width: 224px;
+    grid-template-rows: 44px 132px 52px 56px;
+  }
+
+  .sgm-fit__overview {
+    grid-template-columns: 132px minmax(0, 1fr);
+  }
+
+  .sgm-fit__gauge svg {
+    width: 112px;
+    height: 112px;
+  }
+
+  .sgm-visual-tilt--agenda {
+    padding-top: 20px;
+  }
+}
+
+/* Sin hover (táctiles): las cards muestran su estado revelado completo,
+   el mismo que el hover define en escritorio. */
+@media (hover: none) {
+  .sgm-fit__metric-icon {
+    transform: translate(-50%, -300%);
+  }
+
+  .sgm-fit__metric-value {
+    transform: translate(-50%, -50%);
+  }
+
+  .sgm-fit__gauge-progress {
+    stroke-dashoffset: 0;
+  }
+
+  .sgm-fit__quote strong {
+    transform: translateX(-260%);
+  }
+
+  .sgm-fit__quote span {
+    transform: translateX(0);
+  }
+
+  .sgm-agenda-cloud {
+    height: 240px;
+    box-shadow: 0 12px 0 color-mix(in srgb, var(--agenda-accent) 34%, transparent);
+  }
+
+  .sgm-agenda-cloud__front {
+    top: 105%;
+  }
+
+  .sgm-agenda-cloud__day {
+    top: 36px;
+  }
+
+  .sgm-agenda-cloud__date {
+    top: 70px;
+  }
+
+  .sgm-agenda-cloud__hour {
+    top: 16px;
+    font-size: 46px;
+  }
+
+  .sgm-agenda-cloud__icon {
+    top: 116px;
+    right: -28px;
+    width: 120px;
+    height: 120px;
+    transform: rotate(-35deg);
+  }
+
+  .sgm-agenda-cloud__capacity {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sgm-wifi-loader circle,
+  .sgm-wifi-loader__text::after,
+  .sgm-fit__gauge-progress,
+  .sgm-fit__metric-icon,
+  .sgm-fit__metric-value,
+  .sgm-fit__quote strong,
+  .sgm-fit__quote span,
+  .sgm-agenda-cloud,
+  .sgm-agenda-cloud *,
+  .sgm-agenda-cloud__back svg {
+    animation: none;
+    transition: none;
+  }
+
+  .sgm-wifi-loader__text::after {
+    display: none;
+  }
+}

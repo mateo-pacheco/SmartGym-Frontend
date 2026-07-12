@@ -1,6 +1,8 @@
 import { PageHeader } from '../../components/navigation/PageHeader'
+import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
+import { ModuleGate } from '../../components/feedback/ModuleGate'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { MetricInline } from '../../components/data-display/MetricInline'
 
@@ -11,7 +13,7 @@ export default function MaquinasPage() {
     <>
       <PageHeader
         title="Máquinas y telemetría"
-        lead="Estado de máquinas conectadas, gateways y sincronización. Los datos llegan del backend IoT; no se simula telemetría."
+        lead="Estado de máquinas conectadas, gateways y sincronización en tiempo real."
         breadcrumbs={[
           { label: 'SmartGym', to: '/panel' },
           { label: 'Operación' },
@@ -19,66 +21,68 @@ export default function MaquinasPage() {
         ]}
       />
 
-      <div className="row g-4 mb-4">
-        <div className="col-md-4">
-          <div className="sg-surface p-3 h-100">
-            <MetricInline label="Gateways en línea" value="N/D" tone="neutral" statusLabel="Sin datos" />
+      <ModuleGate contract="Telemetría IoT" />
+
+      <MotionEffect fade slide={{ direction: 'down', offset: 14 }} delay={0.1}>
+        <section aria-label="Indicadores de telemetría" className="sg-surface p-3 p-md-4 mb-4">
+          <div className="row g-4">
+            {['Gateways en línea', 'Máquinas sincronizadas', 'Latencia media'].map((label, i) => (
+              <div key={label} className="col-6 col-md-4">
+                <MotionEffect fade zoom={{ initialScale: 0.92 }} delay={0.16 + i * 0.05}>
+                  <MetricInline label={label} />
+                </MotionEffect>
+              </div>
+            ))}
           </div>
+        </section>
+      </MotionEffect>
+
+      <div className="row g-4">
+        <div className="col-lg-8">
+          <h2 className="sg-section-title">Inventario conectado</h2>
+          <DataTable
+            caption="Inventario de máquinas conectadas con su estado de telemetría"
+            columns={[
+              { key: 'maquina', header: 'Máquina' },
+              { key: 'zona', header: 'Zona' },
+              { key: 'gateway', header: 'Gateway' },
+              { key: 'sincronizacion', header: 'Última sincronización' },
+              { key: 'estado', header: 'Estado' },
+            ]}
+            rows={[]}
+            emptyState={
+              <NoContractState
+                illustration="iot"
+                title="Sin máquinas conectadas"
+                body="El inventario aparecerá cuando el gateway IoT reporte telemetría."
+              />
+            }
+          />
         </div>
-        <div className="col-md-4">
-          <div className="sg-surface p-3 h-100">
-            <MetricInline label="Máquinas sincronizadas" value="N/D" tone="neutral" statusLabel="Sin datos" />
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="sg-surface p-3 h-100">
-            <MetricInline label="Latencia media" value="N/D" tone="neutral" statusLabel="Sin datos" />
-          </div>
+        <div className="col-lg-4">
+          <MotionEffect fade slide={{ direction: 'right', offset: 18 }} delay={0.18}>
+          <h2 className="sg-section-title">Cómo leer los estados</h2>
+          <dl className="sg-deflist sg-surface--inset p-3">
+            <div>
+              <dt>Operación normal</dt>
+              <dd><StatusBadge tone="success" label="Normal" /></dd>
+            </div>
+            <div>
+              <dt>Datos con retraso mayor al umbral</dt>
+              <dd><StatusBadge tone="warning" label="Retrasado" icon="reloj" /></dd>
+            </div>
+            <div>
+              <dt>Funciona con capacidades reducidas</dt>
+              <dd><StatusBadge tone="warning" label="Degradado" /></dd>
+            </div>
+            <div>
+              <dt>Sin comunicación con el gateway</dt>
+              <dd><StatusBadge tone="danger" label="Desconectado" icon="gateway" /></dd>
+            </div>
+          </dl>
+          </MotionEffect>
         </div>
       </div>
-
-      <DataTable
-        caption="Inventario de máquinas conectadas con su estado de telemetría"
-        columns={[
-          { key: 'maquina', header: 'Máquina' },
-          { key: 'zona', header: 'Zona' },
-          { key: 'gateway', header: 'Gateway' },
-          { key: 'sincronizacion', header: 'Última sincronización' },
-          { key: 'estado', header: 'Estado' },
-        ]}
-        rows={[]}
-        emptyState={
-          <NoContractState
-            illustration="iot"
-            moduleName="El inventario IoT"
-            detail="Cada máquina mostrará su gateway, latencia y eventos de sincronización."
-            contract="Telemetría IoT"
-            expectedAction="ver gateways, latencia y sincronización de cada máquina en vivo."
-          />
-        }
-      />
-
-      <section aria-label="Taxonomía de estados de telemetría" className="mt-4">
-        <h2 className="fs-6 fw-semibold mb-2">Cómo leer los estados</h2>
-        <dl className="sg-deflist sg-surface--inset p-3" style={{ maxWidth: 560 }}>
-          <div>
-            <dt>Operación normal</dt>
-            <dd><StatusBadge tone="success" label="Normal" /></dd>
-          </div>
-          <div>
-            <dt>Datos con retraso mayor al umbral</dt>
-            <dd><StatusBadge tone="warning" label="Retrasado" icon="reloj" /></dd>
-          </div>
-          <div>
-            <dt>Funciona con capacidades reducidas</dt>
-            <dd><StatusBadge tone="warning" label="Degradado" /></dd>
-          </div>
-          <div>
-            <dt>Sin comunicación con el gateway</dt>
-            <dd><StatusBadge tone="danger" label="Desconectado" icon="gateway" /></dd>
-          </div>
-        </dl>
-      </section>
     </>
   )
 }

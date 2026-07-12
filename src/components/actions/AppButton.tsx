@@ -1,6 +1,7 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon, type IconName } from '../icons/Icon'
+import { RippleButton, type RippleButtonProps } from '../animate-ui/ripple-button'
 
 type Variant = 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost'
 type Size = 'sm' | 'md' | 'lg'
@@ -55,13 +56,10 @@ export function AppButton(props: AppButtonProps) {
     )
   }
 
+  /* Botón con onda al hacer clic (RippleButton de Animate UI). */
   return (
-    <button
-      type="button"
-      className={cls}
-      {...(rest as Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'>)}
-    >
+    <RippleButton type="button" className={cls} {...(rest as unknown as RippleButtonProps)}>
       {content}
-    </button>
+    </RippleButton>
   )
 }

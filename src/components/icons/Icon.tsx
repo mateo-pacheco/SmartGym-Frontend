@@ -1,4 +1,4 @@
-import type { ReactNode, SVGProps } from 'react'
+import { Children, Fragment, cloneElement, isValidElement, type ReactNode, type SVGProps } from 'react'
 
 /* Set de iconos local SmartGym: 24px, trazo 1.8, esquinas redondeadas.
    Una sola familia de iconos en toda la interfaz (AGENTS.md §8). */
@@ -97,6 +97,7 @@ const paths: Record<string, ReactNode> = {
     </>
   ),
   flechaDerecha: <path d="M4 12h15m-6.5-7 7 7-7 7" />,
+  chevronAbajo: <path d="m6 9.5 6 6 6-6" />,
   mas: <path d="M12 5v14M5 12h14" />,
   check: <path d="m4.5 12.5 5 5L19.5 6.5" />,
   cerrar: <path d="M6 6l12 12M18 6 6 18" />,
@@ -119,6 +120,21 @@ export interface IconProps extends SVGProps<SVGSVGElement> {
   title?: string
 }
 
+/* pathLength normalizado a 1 en cada trazo: habilita el redibujado al hover
+   (estilo lucide-animated) desde CSS sin tocar los paths. */
+function drawable(node: ReactNode): ReactNode {
+  const children =
+    isValidElement(node) && node.type === Fragment
+      ? (node.props as { children?: ReactNode }).children
+      : node
+
+  return Children.map(children, (child) =>
+    isValidElement(child)
+      ? cloneElement(child as React.ReactElement<{ pathLength?: number }>, { pathLength: 1 })
+      : child,
+  )
+}
+
 export function Icon({ name, size = 20, title, ...rest }: IconProps) {
   return (
     <svg
@@ -130,12 +146,13 @@ export function Icon({ name, size = 20, title, ...rest }: IconProps) {
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
+      data-sg-icon=""
       role={title ? 'img' : undefined}
       aria-hidden={title ? undefined : true}
       {...rest}
     >
       {title ? <title>{title}</title> : null}
-      {paths[name]}
+      {drawable(paths[name])}
     </svg>
   )
 }

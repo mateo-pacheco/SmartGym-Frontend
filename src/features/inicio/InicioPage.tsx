@@ -6,14 +6,24 @@ import { ThemeToggle } from '../../components/navigation/ThemeToggle'
 import { SkipToContent } from '../../components/navigation/SkipToContent'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { Icon, type IconName } from '../../components/icons/Icon'
-import { EcosystemLoop } from './EcosystemLoop'
+import { EcosystemCards } from './EcosystemCards'
 import { ModuleVisual, type ModuleVisualName } from './ModuleVisuals'
-import brandMark from '../../assets/brand/smartgym-mark.svg'
-import piscinaUcacue from '../../assets/images/piscina-ucacue.jpg'
+import { NfcCard } from './cards/NfcCard'
+import { IotCard } from './cards/IotCard'
+import { RiesgoMedicoCard } from './cards/RiesgoMedicoCard'
+import { AgendaCard } from './cards/AgendaCard'
+import './cards/module-cards.scss'
+import './cards/module-visuals.scss'
+import { BrandLockup } from '../../components/navigation/BrandLockup'
+import { SocialLinks } from '../../components/navigation/SocialLinks'
+import { NavDropdown } from '../../components/navigation/NavDropdown'
+import { AmbientVideo } from '../../components/media/AmbientVideo'
+import { UbicacionMapa } from './UbicacionMapa'
+import { NAV_GROUPS } from '../../app/layout/navigation'
+import { usePageMeta } from '../../lib/usePageMeta'
+import { usePlatformTransition } from '../../components/feedback/PlatformTransition'
+import { CookieConsent } from '../../components/feedback/CookieConsent'
 import './inicio.scss'
-
-/* Fotografía institucional autorizada, aportada por el propio proyecto:
-   piscina de la Escuela Nacional del Deporte (UCACUE). Ver manifiesto. */
 
 interface FeaturedModule {
   visual: ModuleVisualName
@@ -29,18 +39,16 @@ const FEATURED: FeaturedModule[] = [
   {
     visual: 'nfc',
     title: 'Identidad y acceso NFC',
-    description:
-      'Cada deportista se identifica con su manilla. El sistema valida el acceso, registra el intento y protege las credenciales: ningún valor sensible llega a la pantalla.',
-    benefit: 'Control de acceso auditable sin fricción en la puerta.',
+    description: 'La manilla valida el acceso y registra cada intento sin exponer credenciales.',
+    benefit: 'Entrada rápida y auditable.',
     to: '/operacion/accesos',
     cta: 'Abrir Acceso NFC',
   },
   {
     visual: 'iot',
     title: 'Telemetría IoT de máquinas',
-    description:
-      'Las máquinas conectadas reportan sesiones, latencia y sincronización a través de gateways. Los estados degradado, retrasado y desconectado se distinguen a simple vista.',
-    benefit: 'Mantenimiento y operación guiados por datos reales, nunca simulados.',
+    description: 'Sesiones, latencia y sincronización visibles por equipo y gateway.',
+    benefit: 'Operación guiada por datos reales.',
     to: '/operacion/maquinas',
     cta: 'Abrir Telemetría',
     reverse: true,
@@ -48,18 +56,16 @@ const FEATURED: FeaturedModule[] = [
   {
     visual: 'riesgo',
     title: 'Riesgo médico con escalamiento',
-    description:
-      'Las alertas clínicas llegan con severidad, justificación y flujo de resolución. Lo crítico domina la jerarquía visual y nunca queda oculto tras decoración.',
-    benefit: 'El equipo médico decide antes, con contexto completo y trazable.',
+    description: 'Alertas clínicas priorizadas por severidad, contexto y responsable.',
+    benefit: 'Decisiones oportunas y trazables.',
     to: '/atencion/alertas',
     cta: 'Abrir Alertas médicas',
   },
   {
     visual: 'agenda',
     title: 'Agenda y capacidad',
-    description:
-      'Reservas por franja y aforo por zona con prevención de conflictos. La disponibilidad se lee de un vistazo y también con lector de pantalla.',
-    benefit: 'Espacios llenos donde importa, sin sobrecupo ni filas.',
+    description: 'Reservas por franja y aforo por zona, sin conflictos ni sobrecupo.',
+    benefit: 'Disponibilidad clara de un vistazo.',
     to: '/operacion/agenda',
     cta: 'Abrir Agenda',
     reverse: true,
@@ -78,12 +84,6 @@ const INDEX_MODULES: Array<{ name: string; desc: string; to: string | null; labe
     desc: 'Versiones, revisor responsable y aprobación humana.',
     to: '/atencion/planes',
     label: 'Abrir planes',
-  },
-  {
-    name: 'Seguimiento y adherencia',
-    desc: 'Restricciones, intervenciones y cumplimiento.',
-    to: null,
-    label: '',
   },
   {
     name: 'Exergames XR',
@@ -118,9 +118,9 @@ const FLUJOS: Flujo[] = [
     icon: 'nfc',
     title: 'Bloquear una manilla comprometida',
     steps: [
-      'Abrir Acceso NFC y localizar la manilla',
-      'Elegir «Bloquear» y leer la consecuencia',
-      'Confirmar: el bloqueo queda auditado',
+      'Localizar la manilla',
+      'Revisar la consecuencia',
+      'Confirmar y auditar',
     ],
     to: '/operacion/accesos',
     label: 'Ir a Acceso NFC',
@@ -129,9 +129,9 @@ const FLUJOS: Flujo[] = [
     icon: 'alerta',
     title: 'Atender una alerta médica crítica',
     steps: [
-      'La alerta crítica encabeza la cola por severidad',
-      'Revisar justificación clínica y contexto',
-      'Resolver con decisión trazable del responsable',
+      'Priorizar por severidad',
+      'Revisar contexto clínico',
+      'Resolver con trazabilidad',
     ],
     to: '/atencion/alertas',
     label: 'Ir a Alertas médicas',
@@ -140,40 +140,120 @@ const FLUJOS: Flujo[] = [
     icon: 'gateway',
     title: 'Inspeccionar un gateway desconectado',
     steps: [
-      'El estado «Desconectado» resalta en telemetría',
-      'Abrir el detalle: última sincronización y zona',
-      'Escalar a mantenimiento con el evento registrado',
+      'Detectar la desconexión',
+      'Revisar zona y sincronización',
+      'Escalar a mantenimiento',
     ],
     to: '/operacion/maquinas',
     label: 'Ir a Telemetría',
   },
 ]
 
-const SEGURIDAD = [
+const SEGURIDAD: Array<{ term: string; def: string; icon: IconName }> = [
   {
     term: 'Control por roles',
-    def: 'Cada módulo se muestra según el rol confirmado por el backend. Ocultar en el frontend nunca sustituye la autorización real del servidor.',
+    def: 'Cada persona accede solo a los módulos autorizados por el servidor.',
+    icon: 'escudo',
   },
   {
     term: 'Trazabilidad',
-    def: 'Accesos, bloqueos, aprobaciones y revocaciones dejan un registro cronológico con actor, acción y recurso.',
+    def: 'Cada acción relevante conserva actor, momento y recurso.',
+    icon: 'reloj',
   },
   {
     term: 'Consentimiento',
-    def: 'Los datos de salud se procesan solo con consentimiento vigente; la revocación es explícita y queda registrada.',
+    def: 'Los datos de salud requieren consentimiento vigente y revocable.',
+    icon: 'privacidad',
   },
   {
     term: 'Datos sensibles',
-    def: 'Valores NFC, HMAC, tokens y credenciales nunca aparecen en la interfaz, en URLs ni en registros del cliente.',
+    def: 'Credenciales, tokens y valores NFC nunca se muestran en pantalla.',
+    icon: 'nfc',
   },
   {
     term: 'Auditoría',
-    def: 'Un registro inmutable orientado al tiempo permite reconstruir cualquier decisión operativa o clínica.',
+    def: 'El historial permite reconstruir decisiones operativas y clínicas.',
+    icon: 'auditoria',
   },
 ]
 
+const CUSTOM_MODULE_VISUALS: Partial<Record<ModuleVisualName, typeof NfcCard>> = {
+  nfc: NfcCard,
+  iot: IotCard,
+  riesgo: RiesgoMedicoCard,
+  agenda: AgendaCard,
+}
+
+function FeaturedModuleVisual({ name }: { name: ModuleVisualName }) {
+  const Visual = CUSTOM_MODULE_VISUALS[name]
+
+  return (
+    <div className={`mod-row__visual${Visual ? ' mod-row__visual--custom' : ''}`}>
+      {Visual ? <Visual /> : <ModuleVisual name={name} />}
+    </div>
+  )
+}
+
+interface MediaBandProps {
+  id: string
+  title: string
+  body: string
+  desktopSrc: string
+  mobileSrc: string
+  posterStem: string
+  align?: 'left' | 'right'
+}
+
+function MediaBand({
+  id,
+  title,
+  body,
+  desktopSrc,
+  mobileSrc,
+  posterStem,
+  align = 'left',
+}: MediaBandProps) {
+  return (
+    <section className={`inicio-media-band inicio-media-band--${align}`} aria-labelledby={id}>
+      <AmbientVideo
+        className="inicio-media-band__media"
+        desktopSrc={desktopSrc}
+        mobileSrc={mobileSrc}
+        posterStem={posterStem}
+      />
+      <div className="inicio-media-band__overlay" />
+      <div className="inicio-media-band__copy" data-reveal>
+        <h2 id={id}>{title}</h2>
+        <p>{body}</p>
+      </div>
+    </section>
+  )
+}
+
 export default function InicioPage() {
+  usePageMeta(
+    'SmartGym · Tecnología deportiva UCACUE',
+    'Ecosistema universitario de tecnología deportiva: acceso NFC, telemetría IoT, salud y exergames XR en la Universidad Católica de Cuenca.',
+  )
   const pageRef = useRef<HTMLDivElement>(null)
+  const enterPlatform = usePlatformTransition()
+  const goIngresar = (event: React.MouseEvent) => {
+    event.preventDefault()
+    enterPlatform('/ingresar')
+  }
+
+  /* Anclas internas: scroll manejado aquí en un solo clic. Sin esto,
+     ScrollRestoration (router) anula el salto nativo del primer clic. */
+  const goToAnchor = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const href = event.currentTarget.getAttribute('href')
+    if (!href?.startsWith('#')) return
+    const target = document.getElementById(href.slice(1))
+    if (!target) return
+    event.preventDefault()
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+    window.history.replaceState(null, '', href)
+  }
 
   useLayoutEffect(() => {
     const page = pageRef.current
@@ -193,13 +273,13 @@ export default function InicioPage() {
           mobile: boolean
           fine: boolean
         }
-        const foto = page.querySelector<HTMLElement>('.inicio-hero__media img')
+        const heroMedia = page.querySelector<HTMLElement>('.inicio-hero__media video, .inicio-hero__media img')
 
         /* Intro del hero: fromTo + clearProps para que nada quede invisible. */
         if (desktop) {
           const intro = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.5 } })
-          if (foto) {
-            intro.fromTo(foto, { scale: 1.12, autoAlpha: 0.4 }, { scale: 1.06, autoAlpha: 1, duration: 1.1, ease: 'power2.out' })
+          if (heroMedia) {
+            intro.fromTo(heroMedia, { scale: 1.12, autoAlpha: 0.4 }, { scale: 1.06, autoAlpha: 1, duration: 1.1, ease: 'power2.out' })
           }
           intro
             .fromTo('.inicio-hero__inst', { y: 12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.4 }, '-=0.8')
@@ -243,8 +323,8 @@ export default function InicioPage() {
         }
 
         /* La foto respira con el scroll (solo transform). */
-        if (desktop && foto) {
-          gsap.to(foto, {
+        if (desktop && heroMedia) {
+          gsap.to(heroMedia, {
             yPercent: 7,
             ease: 'none',
             scrollTrigger: {
@@ -257,9 +337,9 @@ export default function InicioPage() {
         }
 
         /* Parallax de cursor sobre la fotografía del hero: deriva sutil. */
-        if (fine && foto) {
-          const xTo = gsap.quickTo(foto, 'x', { duration: 1, ease: 'power3.out' })
-          const yTo = gsap.quickTo(foto, 'y', { duration: 1, ease: 'power3.out' })
+        if (fine && heroMedia) {
+          const xTo = gsap.quickTo(heroMedia, 'x', { duration: 1, ease: 'power3.out' })
+          const yTo = gsap.quickTo(heroMedia, 'y', { duration: 1, ease: 'power3.out' })
           const onMove = (e: PointerEvent) => {
             const nx = e.clientX / window.innerWidth - 0.5
             const ny = e.clientY / window.innerHeight - 0.5
@@ -273,7 +353,8 @@ export default function InicioPage() {
     )
 
     mm.add('(prefers-reduced-motion: no-preference)', () => {
-      // Revelado editorial por sección (elementos sueltos).
+      // Revelado editorial por sección (elementos sueltos). clearProps al
+      // terminar: ningún transform residual puede desalinear el layout.
       gsap.utils.toArray<HTMLElement>('[data-reveal]', page).forEach((el) => {
         gsap.from(el, {
           y: 18,
@@ -281,20 +362,27 @@ export default function InicioPage() {
           duration: 0.45,
           ease: 'power3.out',
           overwrite: 'auto',
+          /* immediateRender: false = el contenido nunca queda pre-oculto;
+             si el trigger no llega a disparar, la sección sigue visible. */
+          immediateRender: false,
           scrollTrigger: { trigger: el, start: 'top 92%', once: true },
+          onComplete: () => gsap.set(el, { clearProps: 'all' }),
         })
       })
 
-      // Grupos con stagger: cada hijo entra en cascada corta.
+      // Grupos con stagger corto y temprano: la cascada termina antes de que
+      // la fila esté en zona de lectura (nada queda a media altura).
       gsap.utils.toArray<HTMLElement>('[data-reveal-group]', page).forEach((group) => {
         gsap.from(group.children, {
-          y: 20,
+          y: 16,
           autoAlpha: 0,
-          duration: 0.5,
-          stagger: 0.08,
+          duration: 0.4,
+          stagger: 0.05,
           ease: 'power3.out',
           overwrite: 'auto',
-          scrollTrigger: { trigger: group, start: 'top 90%', once: true },
+          immediateRender: false,
+          scrollTrigger: { trigger: group, start: 'top 96%', once: true },
+          onComplete: () => gsap.set(group.children, { clearProps: 'all' }),
         })
       })
 
@@ -309,40 +397,41 @@ export default function InicioPage() {
     <div ref={pageRef} className="inicio">
       <SkipToContent />
       <header className="inicio-nav">
-        <Link to="/inicio" className="inicio-nav__brand">
-          <img src={brandMark} alt="" width="30" height="30" />
-          SmartGym
-        </Link>
+        <BrandLockup />
         <nav className="inicio-nav__links" aria-label="Secciones de la presentación">
-          <a className="inicio-nav__link" href="#modulos">
-            Módulos
-          </a>
-          <a className="inicio-nav__link" href="#flujos">
+          <NavDropdown
+            label="Módulos"
+            triggerClassName="inicio-nav__link"
+            items={NAV_GROUPS.flatMap((group) => group.items)}
+          />
+          <a className="inicio-nav__link" href="#flujos" onClick={goToAnchor}>
             Flujos
           </a>
-          <a className="inicio-nav__link" href="#seguridad">
+          <a className="inicio-nav__link" href="#seguridad" onClick={goToAnchor}>
             Seguridad
+          </a>
+          <a className="inicio-nav__link" href="#ubicacion" onClick={goToAnchor}>
+            Ubicación
           </a>
         </nav>
         <div className="ms-auto d-flex align-items-center gap-2">
           <ThemeToggle />
-          <AppButton to="/ingresar" size="sm">
+          <AppButton to="/ingresar" size="sm" onClick={goIngresar}>
             Ingresar
           </AppButton>
         </div>
       </header>
 
       <main id="contenido-principal">
-        {/* ---------- Hero: fotografía institucional degradada en todo el top ---------- */}
+        {/* ---------- Hero audiovisual ---------- */}
         <section className="inicio-hero" aria-labelledby="hero-titulo">
           <div className="inicio-hero__media" aria-hidden="true">
-            <img
-              src={piscinaUcacue}
-              alt=""
-              width="1440"
-              height="903"
-              loading="eager"
-              decoding="async"
+            <AmbientVideo
+              className="inicio-hero__video"
+              desktopSrc="/media/smartgym-piscina-loop.mp4"
+              mobileSrc="/media/smartgym-piscina-loop-mobile.mp4"
+              posterStem="smartgym-piscina"
+              priority
             />
           </div>
           <div className="inicio-hero__copy">
@@ -354,23 +443,33 @@ export default function InicioPage() {
               <span className="line">en un solo sistema.</span>
             </h1>
             <p className="inicio-hero__lead">
-              Acceso NFC, telemetría de máquinas, expediente deportivo-sanitario, planes con
-              revisión humana y auditoría completa para el campus.
+              Acceso, salud, telemetría y control para el campus deportivo.
             </p>
             <div className="inicio-hero__ctas">
-              <AppButton to="/ingresar" size="lg" iconEnd="flechaDerecha">
+              <AppButton to="/ingresar" size="lg" iconEnd="flechaDerecha" onClick={goIngresar}>
                 Ingresar a la plataforma
               </AppButton>
-              <a className="sg-btn sg-btn--secondary sg-btn--lg" href="#modulos">
+              <a className="sg-btn sg-btn--secondary sg-btn--lg" href="#modulos" onClick={goToAnchor}>
                 Explorar módulos
               </a>
             </div>
           </div>
-          <div className="inicio-scrollcue" aria-hidden="true" />
+          <div className="inicio-scrollcue" aria-hidden="true">
+            Desplaza
+          </div>
         </section>
 
-        {/* ---------- Loop pseudo-3D ---------- */}
-        <EcosystemLoop />
+        {/* ---------- Ecosistema: baraja de cards ---------- */}
+        <EcosystemCards />
+
+        <MediaBand
+          id="campus-en-movimiento"
+          title="El campus también entrena"
+          body="Espacios y personas conectados por una misma operación."
+          desktopSrc="/media/smartgym-campus-loop.mp4"
+          mobileSrc="/media/smartgym-campus-loop-mobile.mp4"
+          posterStem="smartgym-campus"
+        />
 
         {/* ---------- Módulos ---------- */}
         <section id="modulos" className="inicio-section" aria-labelledby="modulos-titulo">
@@ -378,8 +477,7 @@ export default function InicioPage() {
             <div data-reveal>
               <h2 id="modulos-titulo">Módulos que operan como un solo producto</h2>
               <p className="inicio-section__lead">
-                Cada módulo comparte el mismo lenguaje visual, los mismos estados y la misma
-                exigencia: información primero, decoración nunca.
+                Una experiencia coherente para toda la operación.
               </p>
             </div>
 
@@ -402,9 +500,7 @@ export default function InicioPage() {
                     {mod.cta}
                   </AppButton>
                 </div>
-                <div className="mod-row__visual">
-                  <ModuleVisual name={mod.visual} />
-                </div>
+                <FeaturedModuleVisual name={mod.visual} />
               </article>
             ))}
 
@@ -432,8 +528,7 @@ export default function InicioPage() {
             <div data-reveal>
               <h2 id="flujos-titulo">Tres flujos críticos, tres interacciones</h2>
               <p className="inicio-section__lead">
-                Las decisiones con consecuencias no pueden esconderse en menús: estos recorridos
-                están diseñados para resolverse en tres pasos como máximo.
+                Decisiones importantes resueltas en tres pasos.
               </p>
             </div>
             <div className="flujos-grid" data-reveal-group>
@@ -457,38 +552,29 @@ export default function InicioPage() {
           </div>
         </section>
 
-        {/* ---------- Control operativo ---------- */}
-        <section className="inicio-section" aria-labelledby="control-titulo">
+        <MediaBand
+          id="entrenamiento-con-evidencia"
+          title="Cada sesión deja evidencia"
+          body="Entrenar, registrar y mejorar sin interrumpir el ritmo."
+          desktopSrc="/media/smartgym-entrenamiento-loop.mp4"
+          mobileSrc="/media/smartgym-entrenamiento-loop-mobile.mp4"
+          posterStem="smartgym-piscina"
+          align="right"
+        />
+
+        {/* ---------- Manifiesto operativo: declaración editorial ---------- */}
+        <section className="inicio-section inicio-manifiesto" aria-labelledby="manifiesto-titulo">
           <div className="inicio-section__inner" data-reveal>
-            <h2 id="control-titulo">Una sala de control honesta</h2>
-            <p className="inicio-section__lead">
-              El centro de control muestra únicamente datos reales del backend. Sin contratos
-              confirmados, cada indicador declara su estado en lugar de inventar métricas.
+            <h2 id="manifiesto-titulo" className="inicio__display inicio-manifiesto__titulo">
+              Datos reales <span>o nada.</span>
+            </h2>
+            <p className="inicio-manifiesto__texto">
+              SmartGym no muestra métricas simuladas: cada número del centro de control nace de
+              un acceso NFC, una máquina conectada o una alerta médica real.
             </p>
-            <div className="inicio-console mt-4">
-              <div className="d-flex flex-wrap align-items-center gap-3">
-                <StatusBadge tone="warning" label="Contrato API no confirmado" />
-                <StatusBadge tone="neutral" label="Sin datos simulados" icon="check" />
-              </div>
-              <div className="inicio-console__grid" data-reveal-group>
-                {['Accesos NFC hoy', 'Gateways en línea', 'Alertas activas', 'Aforo por zona'].map(
-                  (label) => (
-                    <div key={label} className="inicio-console__cell">
-                      <h3>{label}</h3>
-                      <span className="inicio-console__value">N/D</span>
-                      <span className="inicio-console__hint">Sin datos disponibles</span>
-                    </div>
-                  ),
-                )}
-              </div>
-              <div className="inicio-console__trace">
-                <p>
-                  Trazabilidad: cuando el backend publique sus contratos, esta consola mostrará
-                  accesos, sincronizaciones y alertas en tiempo real, con su equivalente textual
-                  accesible.
-                </p>
-              </div>
-            </div>
+            <AppButton variant="tertiary" to="/panel" iconEnd="flechaDerecha">
+              Abrir el centro de control
+            </AppButton>
           </div>
         </section>
 
@@ -498,20 +584,45 @@ export default function InicioPage() {
             <div data-reveal>
               <h2 id="seguridad-titulo">Seguridad institucional, no candados decorativos</h2>
               <p className="inicio-section__lead">
-                SmartGym maneja datos de salud y credenciales de acceso. Estas son las reglas que la
-                interfaz cumple en todos los módulos.
+                Reglas visibles para proteger salud, identidad y acceso.
               </p>
             </div>
-            <ul className="inicio-seguridad__list" data-reveal-group>
-              {SEGURIDAD.map((item) => (
-                <li key={item.term}>
-                  <span className="inicio-seguridad__term">{item.term}</span>
-                  <p className="inicio-seguridad__def">{item.def}</p>
-                </li>
+            <div className="seguridad-grid" data-reveal-group>
+              {SEGURIDAD.map((item, index) => (
+                <article key={item.term} className="seg-card">
+                  <div className="seg-card__content">
+                    <div className="seg-card__top">
+                      <span className="seg-card__num">{String(index + 1).padStart(2, '0')}.</span>
+                      <h3>{item.term}</h3>
+                    </div>
+                    <div className="seg-card__bottom">
+                      <p className="seg-card__def">{item.def}</p>
+                      <svg
+                        className="seg-card__dots"
+                        aria-hidden="true"
+                        viewBox="0 0 32 32"
+                        width="26"
+                        height="26"
+                      >
+                        {[5, 16, 27].flatMap((cy) =>
+                          [5, 16, 27].map((cx) => (
+                            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2.6" fill="currentColor" />
+                          )),
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="seg-card__icon" aria-hidden="true">
+                    <Icon name={item.icon} size={46} />
+                  </span>
+                </article>
               ))}
-            </ul>
+            </div>
           </div>
         </section>
+
+        {/* ---------- Ubicación ---------- */}
+        <UbicacionMapa />
 
         {/* ---------- Cierre ---------- */}
         <section className="inicio-section inicio-cierre" aria-labelledby="cierre-titulo">
@@ -520,10 +631,9 @@ export default function InicioPage() {
               Acceder a SmartGym
             </h2>
             <p className="mt-3 mb-4">
-              Plataforma académica de la Universidad Católica de Cuenca para la operación del
-              gimnasio universitario: deporte, salud y tecnología con trazabilidad.
+              Deporte, salud y tecnología con trazabilidad.
             </p>
-            <AppButton to="/ingresar" size="lg" iconEnd="flechaDerecha">
+            <AppButton to="/ingresar" size="lg" iconEnd="flechaDerecha" onClick={goIngresar}>
               Ingresar a la plataforma
             </AppButton>
           </div>
@@ -531,13 +641,80 @@ export default function InicioPage() {
       </main>
 
       <footer className="inicio-footer">
-        <span>Universidad Católica de Cuenca · SmartGym</span>
-        <nav aria-label="Enlaces institucionales" className="d-flex gap-4">
-          <Link to="/ingresar">Ingresar</Link>
-          <Link to="/panel">Plataforma</Link>
-          <Link to="/administracion/privacidad">Privacidad</Link>
-        </nav>
+        <div className="inicio-footer__inner">
+          <div className="inicio-footer__marca">
+            <BrandLockup size="sm" />
+            <p>
+              Plataforma deportiva de la Universidad Católica de Cuenca.
+            </p>
+            <address className="inicio-footer__direccion">
+              Av. González Suárez y Araucana · Cuenca, Ecuador
+              <br />
+              <a
+                href={
+                  'https://www.google.com/maps/search/?api=1&query=' +
+                  encodeURIComponent('Av. González Suárez y Araucana, Cuenca, Ecuador')
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver en el mapa
+                <Icon name="flechaDerecha" size={14} />
+              </a>
+            </address>
+          </div>
+          <nav className="inicio-footer__grupo" aria-label="Plataforma">
+            <h3>Plataforma</h3>
+            <ul>
+              <li>
+                <Link to="/ingresar" onClick={goIngresar}>
+                  Ingresar
+                </Link>
+              </li>
+              <li>
+                <Link to="/panel">Centro de control</Link>
+              </li>
+              <li>
+                <Link to="/administracion/privacidad">Privacidad y consentimientos</Link>
+              </li>
+              <li>
+                <Link to="/administracion/auditoria">Auditoría</Link>
+              </li>
+            </ul>
+          </nav>
+          <nav className="inicio-footer__grupo" aria-label="Secciones de esta página">
+            <h3>Recorrido</h3>
+            <ul>
+              <li>
+                <a href="#modulos" onClick={goToAnchor}>
+                  Módulos
+                </a>
+              </li>
+              <li>
+                <a href="#flujos" onClick={goToAnchor}>
+                  Flujos críticos
+                </a>
+              </li>
+              <li>
+                <a href="#seguridad" onClick={goToAnchor}>
+                  Seguridad
+                </a>
+              </li>
+              <li>
+                <a href="#ubicacion" onClick={goToAnchor}>
+                  Ubicación
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div className="inicio-footer__legal">
+          <span>© 2026 Universidad Católica de Cuenca · SmartGym</span>
+          <SocialLinks />
+        </div>
       </footer>
+
+      <CookieConsent />
     </div>
   )
 }

@@ -1,8 +1,16 @@
+import { useId } from 'react'
 import { NavLink } from 'react-router-dom'
+import { motion, useReducedMotion } from 'motion/react'
 import { Icon } from '../../components/icons/Icon'
 import { NAV_GROUPS } from './navigation'
 
+/* Estado activo con pill compartido (patrón MotionHighlight de Animate UI):
+   el fondo se desliza entre enlaces al navegar. layoutId único por instancia
+   porque SideNav y MobileNav pueden convivir montados. */
 export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const pillId = useId()
+  const reducedMotion = useReducedMotion()
+
   return (
     <>
       {NAV_GROUPS.map((group) => (
@@ -15,8 +23,24 @@ export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               className="sg-sidenav__link"
               onClick={onNavigate}
             >
-              <Icon name={item.icon} size={18} />
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  {isActive ? (
+                    <motion.span
+                      layoutId={`sg-nav-pill-${pillId}`}
+                      className="sg-nav-pill"
+                      aria-hidden="true"
+                      transition={
+                        reducedMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 350, damping: 32 }
+                      }
+                    />
+                  ) : null}
+                  <Icon name={item.icon} size={18} />
+                  {item.label}
+                </>
+              )}
             </NavLink>
           ))}
         </div>

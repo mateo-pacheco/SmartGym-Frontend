@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /panel
+Disallow: /operacion/
+Disallow: /atencion/
+Disallow: /analisis/
+Disallow: /administracion/
+Disallow: /experiencias/
+Disallow: /ingresar
+
+# Dominio provisional: reemplazar por el definitivo al publicar.
+Sitemap: https://smartgym.ucacue.edu.ec/sitemap.xml

@@ -1,6 +1,40 @@
 /* Capa de aplicación SmartGym: shell persistente + primitivas compartidas.
    Superficies semánticas sobre tokens; nunca `transition: all`. */
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ---------- Cambio de tema: crossfade equilibrado ---------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 360ms;
+  animation-timing-function: var(--sg-ease-product);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* Fallback sin View Transitions: colores en tránsito, nunca `all`. */
+html.sg-theme-anim,
+html.sg-theme-anim body,
+html.sg-theme-anim *,
+html.sg-theme-anim *::before,
+html.sg-theme-anim *::after {
+  transition:
+    background-color 340ms var(--sg-ease-product),
+    color 340ms var(--sg-ease-product),
+    border-color 340ms var(--sg-ease-product),
+    fill 340ms var(--sg-ease-product),
+    stroke 340ms var(--sg-ease-product) !important;
+}
+
 body {
   background-color: var(--sg-canvas);
   color: var(--sg-text-primary);
@@ -76,33 +110,174 @@ p {
 }
 
 .sg-sidenav__brand {
-  display: flex;
+  padding: 6px 10px 16px;
+}
+
+/* ---------- Lockup institucional (escudo + universidad | SmartGym) ---------- */
+.sg-lockup {
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px 16px;
   color: var(--sg-text-primary);
   text-decoration: none;
 }
 
-.sg-sidenav__brand-name {
-  font-weight: 750;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+.sg-lockup img {
+  display: block;
+  height: 30px;
+  width: auto;
 }
 
-.sg-sidenav__brand-sub {
-  display: block;
-  font-size: 0.7rem;
+.sg-lockup__uni {
+  font-size: 0.62rem;
   font-weight: 500;
-  color: var(--sg-text-muted);
-  letter-spacing: 0.02em;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: var(--sg-text-secondary);
+}
+
+.sg-lockup__divider {
+  width: 1px;
+  align-self: stretch;
+  margin-block: 2px;
+  background: var(--sg-border-strong);
+}
+
+.sg-lockup__name {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.sg-lockup--sm img {
+  height: 24px;
+}
+
+.sg-lockup--sm .sg-lockup__uni {
+  font-size: 0.56rem;
+}
+
+.sg-lockup--sm .sg-lockup__name {
+  font-size: 0.92rem;
+}
+
+/* En pantallas muy angostas el lockup conserva escudo + producto;
+   dentro del offcanvas (ancho completo) el lockup íntegro sí cabe. */
+@media (max-width: 419.98px) {
+  .sg-lockup__uni,
+  .sg-lockup__divider {
+    display: none;
+  }
+
+  .offcanvas .sg-lockup__uni,
+  .offcanvas .sg-lockup__divider {
+    display: block;
+  }
+}
+
+/* ---------- Desplegable de navegación ---------- */
+.sg-dropdown {
+  position: relative;
+}
+
+.sg-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+}
+
+.sg-dropdown__chevron {
+  transition: transform var(--sg-motion-base) var(--sg-ease-product);
+}
+
+.sg-dropdown__trigger[aria-expanded='true'] .sg-dropdown__chevron {
+  transform: rotate(180deg);
+}
+
+.sg-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 1000; /* dropdown, escala Bootstrap */
+  display: none;
+  opacity: 0;
+  min-width: 264px;
+  padding: 6px;
+  background: var(--sg-surface);
+  border: 1px solid var(--sg-border);
+  border-radius: var(--sg-radius-md);
+  box-shadow: var(--sg-shadow-md);
+}
+
+/* Puente invisible sobre el hueco trigger→menú para que el hover no se corte. */
+.sg-dropdown__menu::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.sg-dropdown__menu[data-open] {
+  display: block;
+}
+
+/* Dos columnas cuando hay espacio: el menú no tapa media pantalla. */
+@media (min-width: 768px) {
+  .sg-dropdown__menu[data-open] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(216px, 1fr));
+    gap: 2px 6px;
+    width: max-content;
+    max-width: min(560px, calc(100vw - 40px));
+  }
+}
+
+.sg-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--sg-radius-sm);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--sg-text-primary);
+  text-decoration: none;
+}
+
+.sg-dropdown__item svg {
+  color: var(--sg-text-secondary);
+  flex-shrink: 0;
+}
+
+.sg-dropdown__item:hover {
+  background: var(--sg-surface-raised);
+  color: var(--sg-text-primary);
+}
+
+.sg-dropdown__item.active {
+  color: var(--sg-brand-strong);
+  background: var(--sg-brand-soft);
+}
+
+.sg-dropdown__item.active svg {
+  color: var(--sg-brand-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-dropdown__chevron {
+    transition: none;
+  }
 }
 
 .sg-sidenav__group {
   margin: 14px 10px 4px;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--sg-text-muted);
@@ -116,7 +291,7 @@ p {
   min-height: 40px;
   border-radius: var(--sg-radius-sm);
   color: var(--sg-text-secondary);
-  font-weight: 550;
+  font-weight: 500;
   font-size: 0.92rem;
   text-decoration: none;
   position: relative;
@@ -131,18 +306,27 @@ p {
   transition: color var(--sg-motion-fast) var(--sg-ease-product);
 }
 
-.sg-sidenav__link:hover {
+.sg-sidenav__link:hover:not(.active) {
   background: var(--sg-surface-raised);
   color: var(--sg-text-primary);
 }
 
+/* El fondo activo lo pinta el pill animado (.sg-nav-pill); el enlace solo
+   cambia de color para no duplicar la superficie. */
 .sg-sidenav__link.active {
-  background: var(--sg-nav-active-bg);
   color: var(--sg-brand-strong);
 }
 
 .sg-sidenav__link.active svg {
   color: var(--sg-brand);
+}
+
+.sg-nav-pill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--sg-radius-sm);
+  background: var(--sg-nav-active-bg);
 }
 
 /* ---------- Topbar ---------- */
@@ -444,18 +628,11 @@ p {
   font-size: 0.88rem;
 }
 
-.sg-table caption {
-  caption-side: top;
-  padding: 14px 16px 4px;
-  color: var(--sg-text-muted);
-  font-size: 0.8rem;
-}
-
 .sg-table th {
   text-align: left;
   padding: 10px 16px;
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--sg-text-muted);
@@ -492,7 +669,7 @@ p {
 }
 
 .sg-empty__title {
-  font-weight: 650;
+  font-weight: 600;
   font-size: 0.98rem;
   margin: 10px 0 0;
 }
@@ -598,7 +775,7 @@ p {
 /* ---------- Campos de formulario SmartGym ---------- */
 .sg-field-label {
   font-size: 0.8rem;
-  font-weight: 620;
+  font-weight: 600;
   color: var(--sg-text-secondary);
   margin-bottom: 6px;
 }
@@ -682,7 +859,7 @@ p {
 .invalid-feedback {
   color: var(--sg-danger-700);
   font-size: 0.8rem;
-  font-weight: 550;
+  font-weight: 500;
   margin-top: 5px;
 }
 
@@ -727,7 +904,7 @@ p {
   display: grid;
   place-items: center;
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 600;
   background: var(--sg-surface-raised);
   color: var(--sg-text-muted);
   border: 1.5px solid var(--sg-border-strong);
@@ -826,11 +1003,204 @@ p {
   transform: translateX(16px);
 }
 
-/* ---------- Estado vacío: pista de contrato ---------- */
-.sg-empty__hint {
+/* ---------- Iconos animados (estilo lucide-animated) ----------
+   Al hacer hover sobre el control, el trazo del icono se redibuja.
+   Solo puntero fino y sin reduced-motion; en reposo no cambia nada. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :is(
+      .sg-sidenav__link,
+      .sg-dropdown__item,
+      .sg-btn,
+      .sg-gate__link,
+      .ingresar__back,
+      .inicio-footer a
+    ):hover
+    svg[data-sg-icon]
+    :is(path, circle, rect, polyline, line) {
+    stroke-dasharray: 1;
+    animation: sg-icon-draw 0.55s var(--sg-ease-product);
+  }
+}
+
+@keyframes sg-icon-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------- Texto secundario: escala única (0.8 / 0.85 rem) ---------- */
+.sg-note {
+  font-size: 0.85rem;
+  color: var(--sg-text-secondary);
+  margin: 0;
+  max-width: 62ch;
+}
+
+.sg-note--muted {
   font-size: 0.8rem;
   color: var(--sg-text-muted);
-  max-width: 42ch;
+}
+
+/* ---------- Título de sección dentro de una página de módulo ---------- */
+.sg-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 0 0 12px;
+}
+
+/* ---------- ModuleGate: contrato pendiente en una sola línea ---------- */
+.sg-gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  background: var(--sg-surface-inset);
+  border: 1px solid var(--sg-border);
+  border-radius: var(--sg-radius-md);
+}
+
+.sg-gate__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--sg-warning-100);
+  color: var(--sg-warning-800);
+}
+
+[data-theme='dark'] .sg-gate__icon {
+  color: var(--sg-warning-700);
+}
+
+.sg-gate__text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sg-text-secondary);
+}
+
+.sg-gate__text strong {
+  color: var(--sg-text-primary);
+  font-weight: 600;
+}
+
+.sg-gate__link {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sg-brand);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sg-gate__link:hover {
+  color: var(--sg-brand-strong);
+  text-decoration: underline;
+}
+
+@media (max-width: 575.98px) {
+  .sg-gate__link {
+    margin-left: 38px;
+  }
+}
+
+/* ---------- Métrica operativa ---------- */
+.sg-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sg-metric__label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--sg-text-secondary);
+}
+
+.sg-metric__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sg-metric__value--empty {
+  color: var(--sg-text-muted);
+  font-weight: 600;
+}
+
+/* ---------- Catálogo de reportes (filas, no cards idénticas) ---------- */
+.sg-catalog {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.sg-catalog li {
+  border-bottom: 1px solid var(--sg-border);
+}
+
+.sg-catalog li:last-child {
+  border-bottom: 0;
+}
+
+.sg-catalog__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+}
+
+.sg-catalog__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--sg-radius-sm);
+  background: var(--sg-brand-soft);
+  color: var(--sg-brand-strong);
+}
+
+.sg-catalog__name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sg-catalog__desc {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--sg-text-secondary);
+}
+
+/* ---------- Checklist de compromisos ---------- */
+.sg-checklist {
+  list-style: none;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.sg-checklist li {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--sg-text-secondary);
+}
+
+.sg-checklist__check {
+  color: var(--sg-success-700);
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 /* ---------- Próximos pasos de integración (panel) ---------- */
@@ -870,7 +1240,7 @@ p {
 .sg-nextsteps strong {
   display: block;
   font-size: 0.85rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .sg-nextsteps__detail {

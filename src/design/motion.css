@@ -1,20 +1,7 @@
 /* Motion del producto: solo transform/opacity, curvas exponenciales, sin bounce. */
 
-/* Transición de ruta: únicamente el outlet anidado, nunca el shell. */
-.sg-route-enter {
-  animation: sg-route-in var(--sg-motion-base) var(--sg-ease-product) both;
-}
-
-@keyframes sg-route-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* La transición de ruta y las entradas de bloques viven en JS
+   (MotionEffect de Animate UI sobre motion/react), no en CSS. */
 
 /* Realce breve de fila actualizada (una sola pasada, sin loop). */
 @keyframes sg-row-flash {
@@ -27,19 +14,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sg-route-enter {
-    animation: sg-route-fade 160ms ease-out both;
-  }
-
-  @keyframes sg-route-fade {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
   *,
   *::before,
   *::after {
@@ -47,9 +21,5 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .sg-route-enter {
-    animation-duration: 0.01ms !important;
   }
 }

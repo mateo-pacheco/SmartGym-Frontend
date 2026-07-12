@@ -4,6 +4,7 @@ import { FilterBar } from '../../components/data-display/FilterBar'
 import { SearchField } from '../../components/forms/SearchField'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
+import { ModuleGate } from '../../components/feedback/ModuleGate'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
 import { useDrafts } from '../../services/drafts/useDrafts'
@@ -44,6 +45,8 @@ export default function DeportistasPage() {
         }
       />
 
+      <ModuleGate contract="Deportistas y expediente" />
+
       <FilterBar label="Búsqueda de deportistas">
         <div>
           <span className="sg-field-label d-block">Buscar</span>
@@ -70,10 +73,13 @@ export default function DeportistasPage() {
         emptyState={
           <NoContractState
             illustration="riesgo"
-            moduleName="El padrón de deportistas"
-            detail="Puedes crear borradores locales desde «Nuevo deportista»."
-            contract="Deportistas y expediente"
-            expectedAction="abrir el expediente con clearance, observaciones y sesiones."
+            title="Aún no hay deportistas registrados"
+            body="Crea un borrador local mientras el módulo se conecta al backend."
+            action={
+              <AppButton size="sm" icon="mas" onClick={() => setModalAbierto(true)}>
+                Nuevo deportista
+              </AppButton>
+            }
           />
         }
       />

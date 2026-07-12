@@ -4,6 +4,7 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { FilterBar } from '../../components/data-display/FilterBar'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
+import { ModuleGate } from '../../components/feedback/ModuleGate'
 
 /* Auditoría: tabla primero, orientada al tiempo, sin fotos ni animación
    de scroll (AGENTS.md §15). */
@@ -23,6 +24,8 @@ export default function AuditoriaPage() {
           { label: 'Auditoría' },
         ]}
       />
+
+      <ModuleGate contract="Auditoría del sistema" />
 
       <FilterBar label="Filtros de auditoría">
         <Form.Group controlId="auditoria-desde">
@@ -58,10 +61,8 @@ export default function AuditoriaPage() {
         emptyState={
           <NoContractState
             illustration="auditoria"
-            moduleName="El registro de auditoría"
-            detail="Cada evento incluirá actor, acción, recurso y resultado, sin exponer identificadores sensibles."
-            contract="Auditoría del sistema"
-            expectedAction="reconstruir cualquier decisión operativa o clínica por fecha y actor."
+            title="Aún no hay eventos de auditoría"
+            body="Cada evento incluirá actor, acción, recurso y resultado, sin exponer identificadores sensibles."
           />
         }
       />

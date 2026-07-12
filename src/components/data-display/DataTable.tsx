@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { MotionEffect } from '../animate-ui/motion-effect'
 
 export interface DataTableColumn {
   key: string
@@ -17,12 +18,13 @@ export interface DataTableProps {
 
 export function DataTable({ caption, columns, rows, emptyState, loading }: DataTableProps) {
   return (
-    <div className="sg-table-wrap">
+    <MotionEffect fade slide={{ direction: 'down', offset: 16 }} delay={0.12}>
+      <div className="sg-table-wrap">
       {loading ? (
         loading
       ) : (
         <table className="sg-table">
-          <caption>{caption}</caption>
+          <caption className="visually-hidden">{caption}</caption>
           <thead>
             <tr>
               {columns.map((c) => (
@@ -51,6 +53,7 @@ export function DataTable({ caption, columns, rows, emptyState, loading }: DataT
           </tbody>
         </table>
       )}
-    </div>
+      </div>
+    </MotionEffect>
   )
 }

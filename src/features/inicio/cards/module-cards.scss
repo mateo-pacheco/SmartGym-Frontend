@@ -1,0 +1,214 @@
+/* Motor 3D compartido. La superficie material de card pertenece solo a NFC. */
+.sgm-tilt {
+  display: grid;
+  place-items: center;
+  margin-inline: auto;
+  perspective: 1200px;
+}
+
+.sgm-tilt__plane {
+  position: relative;
+}
+
+.sgm-tilt__glare {
+  position: absolute;
+  inset: -50%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* ---------- Card física: credencial NFC ---------- */
+.sgm-parallax {
+  --mc-card: linear-gradient(135deg, #ffffff 0%, var(--sg-paper-100) 48%, var(--sg-silver-200) 100%);
+  --mc-border: color-mix(in srgb, var(--sg-ink-950) 14%, transparent);
+  --mc-shadow: 0 4px 8px color-mix(in srgb, var(--sg-ink-950) 18%, transparent);
+  --mc-primary: var(--sg-ink-800);
+  --mc-muted: color-mix(in srgb, var(--sg-ink-800) 58%, transparent);
+  --mc-emb1: rgba(255, 255, 255, 0.95);
+  --mc-emb2: color-mix(in srgb, var(--sg-ink-950) 24%, transparent);
+  --mc-glare: rgba(255, 255, 255, 0.72);
+  --mc-noise: 0.08;
+  --mc-logo-plate: #ffffff;
+  --mc-logo-stroke: var(--sg-silver-300);
+  --mc-logo-bar: var(--sg-ink-700);
+
+  width: min(380px, 100%);
+  aspect-ratio: 380 / 240;
+  container-type: inline-size;
+}
+
+[data-theme='dark'] .sgm-parallax {
+  --mc-card: linear-gradient(135deg, var(--sg-ink-800) 0%, #111111 50%, #050505 100%);
+  --mc-border: rgba(255, 255, 255, 0.15);
+  --mc-shadow: 0 4px 8px rgba(0, 0, 0, 0.48);
+  --mc-primary: #d1d1d1;
+  --mc-muted: rgba(255, 255, 255, 0.4);
+  --mc-emb1: rgba(255, 255, 255, 0.2);
+  --mc-emb2: rgba(0, 0, 0, 0.8);
+  --mc-glare: rgba(255, 255, 255, 0.15);
+  --mc-noise: 0.15;
+  --mc-logo-plate: #e8e8e8;
+  --mc-logo-stroke: #d1d1d1;
+  --mc-logo-bar: #4a4a4a;
+}
+
+.sgm-card {
+  width: 100%;
+  height: 100%;
+  background: var(--mc-card);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--sg-radius-lg);
+  box-shadow: var(--mc-shadow);
+  overflow: hidden;
+}
+
+.sgm-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: var(--mc-noise);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.sgm-card__front {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  padding: clamp(18px, 6cqw, 24px) clamp(20px, 7cqw, 28px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transform: translateZ(30px);
+}
+
+.sgm-nfc__header,
+.sgm-nfc__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sgm-nfc__logo {
+  width: 56px;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.sgm-nfc__wave {
+  width: clamp(20px, 6cqw, 24px);
+  height: clamp(20px, 6cqw, 24px);
+  flex: 0 0 auto;
+  overflow: visible;
+  color: var(--mc-muted);
+  transform: rotate(90deg);
+}
+
+.sgm-nfc__chiprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+
+.sgm-nfc__chip {
+  width: 44px;
+  height: 34px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #e0c879, #a67c00);
+  box-shadow:
+    inset 0 0 6px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.sgm-nfc__chip i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.sgm-nfc__chip i:nth-child(1) {
+  top: 25%;
+}
+
+.sgm-nfc__chip i:nth-child(2) {
+  top: 50%;
+}
+
+.sgm-nfc__chip i:nth-child(3) {
+  top: 75%;
+}
+
+.sgm-nfc__chip b {
+  position: absolute;
+  inset: 15% 25%;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.sgm-nfc__type {
+  color: var(--mc-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.sgm-nfc__numbers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  color: var(--mc-primary);
+  font: 700 clamp(19px, 6cqw, 24px) Consolas, 'Courier New', monospace;
+  letter-spacing: 0.15em;
+  text-shadow:
+    1px 1px 1px var(--mc-emb1),
+    -1px -1px 1px var(--mc-emb2);
+}
+
+.sgm-nfc__footer {
+  align-items: flex-end;
+}
+
+.sgm-nfc__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sgm-nfc__label {
+  color: var(--mc-muted);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.sgm-nfc__value {
+  color: var(--mc-primary);
+  font: 700 clamp(12px, 3.6cqw, 14px) Consolas, 'Courier New', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow:
+    1px 1px 1px var(--mc-emb1),
+    -1px -1px 1px var(--mc-emb2);
+}
+
+@container (max-width: 330px) {
+  .sgm-nfc__type {
+    max-width: 18ch;
+    text-align: right;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .sgm-nfc__numbers {
+    letter-spacing: 0.08em;
+  }
+
+  .sgm-nfc__value {
+    letter-spacing: 0.06em;
+  }
+}
