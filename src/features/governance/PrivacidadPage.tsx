@@ -2,12 +2,28 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
-import { ModuleGate } from '../../components/feedback/ModuleGate'
+import { ApiState } from '../../components/feedback/ApiState'
 import { Icon } from '../../components/icons/Icon'
+import { StatusBadge } from '../../components/data-display/StatusBadge'
+import { useApiData } from '../../services/api/useApiData'
+import { gymApprovals } from '../../services/api/endpoints'
 
 /* Gobernanza: consentimiento, revocación y privacidad con copy explícito.
    La autorización real siempre vive en el backend. */
 export default function PrivacidadPage() {
+  const decisiones = useApiData(() => gymApprovals.listar())
+  const filas = (decisiones.datos ?? []).map((a) => ({
+    titular: a.deportistaId,
+    ambito: `Tratamiento de datos de salud — ${a.tipoRestriccion}`,
+    otorgado: new Date(a.fechaValidacion).toLocaleDateString('es-EC'),
+    estado: (
+      <StatusBadge
+        tone={a.estado === 'APROBADO' ? 'success' : 'warning'}
+        label={a.estado}
+      />
+    ),
+    accion: a.fechaExpiracion ? `Vence ${a.fechaExpiracion}` : 'Vigencia controlada',
+  }))
   return (
     <>
       <PageHeader
@@ -20,7 +36,7 @@ export default function PrivacidadPage() {
         ]}
       />
 
-      <ModuleGate contract="Consentimientos y privacidad" />
+      <ApiState estado={decisiones.estado} contract="Consentimientos y privacidad" error={decisiones.error} onRetry={decisiones.recargar} />
 
       <div className="row g-4">
         <div className="col-lg-8">
@@ -34,7 +50,7 @@ export default function PrivacidadPage() {
               { key: 'estado', header: 'Estado' },
               { key: 'accion', header: 'Gestión', align: 'end' },
             ]}
-            rows={[]}
+            rows={filas}
             emptyState={
               <NoContractState
                 illustration="auditoria"

@@ -3,19 +3,20 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
-import { ModuleGate } from '../../components/feedback/ModuleGate'
+import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
 import { useDrafts } from '../../services/drafts/useDrafts'
 import { CrearReservaModal } from './CrearReservaModal'
-
-const ZONAS = ['Sala de fuerza', 'Cardio', 'Estudio XR', 'Pista'] as const
+import { useApiData } from '../../services/api/useApiData'
+import { agendamiento } from '../../services/api/endpoints'
 
 /* Agenda y aforo: prioriza disponibilidad, ocupación y prevención de
    conflictos. El calendario accesible llegará con el contrato real. */
 export default function AgendaPage() {
   const [modalAbierto, setModalAbierto] = useState(false)
   const { reservas } = useDrafts()
+  const espacios = useApiData(() => agendamiento.listarEspacios())
 
   const filas = reservas.map((r) => ({
     franja: `${r.fecha} · ${r.franja}`,
@@ -42,7 +43,7 @@ export default function AgendaPage() {
         }
       />
 
-      <ModuleGate contract="Reservas y aforo" />
+      <ApiState estado={espacios.estado} contract="Reservas y aforo" error={espacios.error} onRetry={espacios.recargar} />
 
       <div className="row g-4">
         <div className="col-lg-8">
@@ -75,15 +76,15 @@ export default function AgendaPage() {
           <MotionEffect fade slide={{ direction: 'right', offset: 18 }} delay={0.18}>
             <h2 className="sg-section-title">Capacidad por zona</h2>
             <dl className="sg-deflist sg-surface--inset p-3">
-              {ZONAS.map((zona) => (
-                <div key={zona}>
-                  <dt>{zona}</dt>
-                  <dd className="sg-metric__value--empty">—</dd>
+              {(espacios.datos ?? []).map((espacio) => (
+                <div key={espacio.id}>
+                  <dt>{espacio.nombre}</dt>
+                  <dd>{espacio.capacidadMaxima} personas</dd>
                 </div>
               ))}
             </dl>
             <p className="sg-note sg-note--muted mt-2">
-              La ocupación en tiempo real incluirá barras accesibles con su equivalente textual.
+              Capacidades registradas en el backend para controlar reservas y aforo.
             </p>
           </MotionEffect>
         </div>

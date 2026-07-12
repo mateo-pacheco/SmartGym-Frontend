@@ -50,7 +50,11 @@ async function obtenerTokenSupabase(
   config: SupabaseConfig,
   correo: string,
   clave: string,
-): Promise<{ token: string } | 'credenciales' | 'red'> {
+): Promise<
+  | { token: string; refreshToken?: string; expiresIn?: number }
+  | 'credenciales'
+  | 'red'
+> {
   let response: Response
   try {
     response = await fetch(`${config.url}/auth/v1/token?grant_type=password`, {
@@ -65,8 +69,18 @@ async function obtenerTokenSupabase(
     return 'credenciales'
   }
   if (!response.ok) return 'red'
-  const data = (await response.json()) as { access_token?: string }
-  return data.access_token ? { token: data.access_token } : 'red'
+  const data = (await response.json()) as {
+    access_token?: string
+    refresh_token?: string
+    expires_in?: number
+  }
+  return data.access_token
+    ? {
+        token: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresIn: data.expires_in,
+      }
+    : 'red'
 }
 
 /** Inicia sesión: JWT de Supabase + sondeo contra la API SmartGym.
@@ -87,7 +101,7 @@ export async function iniciarSesion(
     return resultado
   }
 
-  setApiToken(resultado.token, recordar)
+  setApiToken(resultado.token, recordar, resultado.refreshToken, resultado.expiresIn)
   try {
     await accesosNfc.consultar({ size: 1 })
     sesion = { usuario }

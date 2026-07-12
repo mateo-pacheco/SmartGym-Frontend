@@ -1,5 +1,4 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { AppShell } from '../layout/AppShell'
 import { Root } from './Root'
 import { RootError } from './RootError'
 import InicioPage from '../../features/inicio/InicioPage'
@@ -16,6 +15,7 @@ import ReportesPage from '../../features/reports/ReportesPage'
 import AuditoriaPage from '../../features/governance/AuditoriaPage'
 import PrivacidadPage from '../../features/governance/PrivacidadPage'
 import NotFoundPage from '../../features/not-found/NotFoundPage'
+import { RequireSession } from './RequireSession'
 
 const routerFuture = {
   v7_relativeSplatPath: true,
@@ -36,7 +36,7 @@ export const router = createBrowserRouter(
       { path: 'inicio', element: <InicioPage /> },
       { path: 'ingresar', element: <IngresarPage /> },
       {
-        element: <AppShell />,
+        element: <RequireSession />,
         children: [
           { path: 'panel', element: <PanelPage /> },
           { path: 'operacion/accesos', element: <AccesosPage /> },

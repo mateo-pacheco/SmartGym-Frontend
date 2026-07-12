@@ -4,11 +4,13 @@ import { FilterBar } from '../../components/data-display/FilterBar'
 import { SearchField } from '../../components/forms/SearchField'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
-import { ModuleGate } from '../../components/feedback/ModuleGate'
+import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
 import { useDrafts } from '../../services/drafts/useDrafts'
 import { NuevoDeportistaModal } from './NuevoDeportistaModal'
+import { useApiData } from '../../services/api/useApiData'
+import { clinicalEvaluations } from '../../services/api/endpoints'
 
 /* Deportistas y expediente: contexto clínico calmado, sin decoración,
    exposición mínima de datos de salud (AGENTS.md §15). */
@@ -16,9 +18,19 @@ export default function DeportistasPage() {
   const [busqueda, setBusqueda] = useState('')
   const [modalAbierto, setModalAbierto] = useState(false)
   const { deportistas } = useDrafts()
+  const evaluaciones = useApiData(() => clinicalEvaluations.listar())
 
   const filtro = busqueda.trim().toLowerCase()
-  const filas = deportistas
+  const filasBackend = Array.from(
+    new Map((evaluaciones.datos ?? []).map((e) => [e.deportistaId, e])).values(),
+  ).map((e) => ({
+    nombre: e.deportistaId,
+    programa: e.diagnostico,
+    aptitud: <StatusBadge tone="success" label="Evaluado" icon="check" />,
+    ultimaEvaluacion: new Date(e.fechaEvaluacion).toLocaleDateString('es-EC'),
+    acciones: <StatusBadge tone="info" label={`RPE ${e.rpe ?? '—'}`} icon="pulso" />,
+  }))
+  const filasLocales = deportistas
     .filter((d) => !filtro || d.nombre.toLowerCase().includes(filtro))
     .map((d) => ({
       nombre: d.nombre,
@@ -27,6 +39,9 @@ export default function DeportistasPage() {
       ultimaEvaluacion: 'Pendiente',
       acciones: <StatusBadge tone="neutral" label="Borrador local" icon="reloj" />,
     }))
+  const filas = [...filasBackend, ...filasLocales].filter(
+    (fila) => !filtro || fila.nombre.toLowerCase().includes(filtro),
+  )
 
   return (
     <>
@@ -45,7 +60,7 @@ export default function DeportistasPage() {
         }
       />
 
-      <ModuleGate contract="Deportistas y expediente" />
+      <ApiState estado={evaluaciones.estado} contract="Deportistas y expediente" error={evaluaciones.error} onRetry={evaluaciones.recargar} />
 
       <FilterBar label="Búsqueda de deportistas">
         <div>
@@ -74,7 +89,7 @@ export default function DeportistasPage() {
           <NoContractState
             illustration="riesgo"
             title="Aún no hay deportistas registrados"
-            body="Crea un borrador local mientras el módulo se conecta al backend."
+            body="No existen evaluaciones clínicas ni borradores registrados."
             action={
               <AppButton size="sm" icon="mas" onClick={() => setModalAbierto(true)}>
                 Nuevo deportista

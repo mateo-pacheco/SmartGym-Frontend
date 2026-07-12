@@ -4,7 +4,9 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { FilterBar } from '../../components/data-display/FilterBar'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
-import { ModuleGate } from '../../components/feedback/ModuleGate'
+import { ApiState } from '../../components/feedback/ApiState'
+import { useApiData } from '../../services/api/useApiData'
+import { accesosNfc } from '../../services/api/endpoints'
 
 /* Auditoría: tabla primero, orientada al tiempo, sin fotos ni animación
    de scroll (AGENTS.md §15). */
@@ -12,6 +14,18 @@ export default function AuditoriaPage() {
   const [tipo, setTipo] = useState('todos')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
+  const auditorias = useApiData(() => accesosNfc.auditoriasManillas({ size: 50 }))
+  const filas = (auditorias.datos?.content ?? [])
+    .filter(() => tipo === 'todos' || tipo === 'acceso')
+    .filter((a) => !desde || a.fechaHora.slice(0, 10) >= desde)
+    .filter((a) => !hasta || a.fechaHora.slice(0, 10) <= hasta)
+    .map((a) => ({
+      fecha: new Date(a.fechaHora).toLocaleString('es-EC'),
+      actor: a.actorTipo,
+      accion: a.accion,
+      recurso: a.manillaId,
+      resultado: a.detalle,
+    }))
 
   return (
     <>
@@ -25,7 +39,7 @@ export default function AuditoriaPage() {
         ]}
       />
 
-      <ModuleGate contract="Auditoría del sistema" />
+      <ApiState estado={auditorias.estado} contract="Auditoría del sistema" error={auditorias.error} onRetry={auditorias.recargar} />
 
       <FilterBar label="Filtros de auditoría">
         <Form.Group controlId="auditoria-desde">
@@ -57,7 +71,7 @@ export default function AuditoriaPage() {
           { key: 'recurso', header: 'Recurso' },
           { key: 'resultado', header: 'Resultado' },
         ]}
-        rows={[]}
+        rows={filas}
         emptyState={
           <NoContractState
             illustration="auditoria"

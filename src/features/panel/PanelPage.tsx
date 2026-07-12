@@ -7,6 +7,8 @@ import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
 import { getApiConfig } from '../../services/api/client'
 import { haySesion } from '../../services/api/auth'
+import { useApiData } from '../../services/api/useApiData'
+import { accesosNfc, agendamiento, iotMaquinas, riskAlerts } from '../../services/api/endpoints'
 
 /* Centro de control: composición tipo sala de mando. Sin datos inventados;
    el estado de integración refleja la conexión real con el backend. */
@@ -14,6 +16,35 @@ export default function PanelPage() {
   const api = getApiConfig()
   const conectado = api.status === 'configurado'
   const conSesion = haySesion()
+  const resumen = useApiData(async () => {
+    const [accesos, maquinas, alertas, espacios] = await Promise.allSettled([
+      accesosNfc.consultar({ size: 10 }),
+      iotMaquinas.listar(),
+      riskAlerts.activas(),
+      agendamiento.listarEspacios(),
+    ])
+    return {
+      accesos: accesos.status === 'fulfilled' ? accesos.value : null,
+      maquinas: maquinas.status === 'fulfilled' ? maquinas.value : [],
+      alertas: alertas.status === 'fulfilled' ? alertas.value : [],
+      espacios: espacios.status === 'fulfilled' ? espacios.value : [],
+    }
+  })
+  const datos = resumen.datos
+  const eventos = [
+    ...(datos?.accesos?.content ?? []).slice(0, 4).map((a) => ({
+      hora: new Date(a.fechaHoraServidor).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' }),
+      evento: `Acceso ${a.resultado.toLowerCase()}`,
+      origen: a.maquinaId,
+      estado: <StatusBadge tone={a.resultado === 'EXITOSO' ? 'success' : 'danger'} label={a.resultado} />,
+    })),
+    ...(datos?.alertas ?? []).slice(0, 3).map((a) => ({
+      hora: new Date(a.fechaDeteccion).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' }),
+      evento: a.descripcion ?? a.tipoAlerta,
+      origen: a.deportistaId,
+      estado: <StatusBadge tone="warning" label={a.nivelRiesgo} />,
+    })),
+  ]
 
   return (
     <>
@@ -26,19 +57,14 @@ export default function PanelPage() {
       <MotionEffect fade slide={{ direction: 'down', offset: 14 }} delay={0.06}>
         <section aria-label="Indicadores operativos" className="sg-surface p-3 p-md-4 mb-4">
           <div className="row g-4">
-            {['Accesos NFC hoy', 'Gateways conectados', 'Alertas médicas activas', 'Aforo actual'].map(
-              (label, i) => (
-                <div key={label} className="col-6 col-lg-3">
-                  <MotionEffect fade zoom={{ initialScale: 0.92 }} delay={0.12 + i * 0.05}>
-                    <MetricInline label={label} />
-                  </MotionEffect>
-                </div>
-              ),
-            )}
+            <div className="col-6 col-lg-3"><MetricInline label="Accesos recientes" value={datos?.accesos ? String(datos.accesos.totalElements) : 'Restringido'}/></div>
+            <div className="col-6 col-lg-3"><MetricInline label="Máquinas conectadas" value={String((datos?.maquinas ?? []).filter((m) => m.estadoConexion === 'CONECTADO').length)}/></div>
+            <div className="col-6 col-lg-3"><MetricInline label="Alertas médicas activas" value={String(datos?.alertas.length ?? 0)}/></div>
+            <div className="col-6 col-lg-3"><MetricInline label="Espacios operativos" value={String(datos?.espacios.length ?? 0)}/></div>
           </div>
           <p className="sg-note sg-note--muted mt-3 mb-0">
             {conectado
-              ? 'Los indicadores mostrarán datos reales al iniciar sesión con un rol autorizado.'
+              ? resumen.estado === 'cargando' ? 'Consultando indicadores reales…' : 'Indicadores obtenidos del backend según los permisos de la sesión.'
               : 'Los indicadores se activan con los contratos de eventos y telemetría.'}
           </p>
         </section>
@@ -55,7 +81,7 @@ export default function PanelPage() {
               { key: 'origen', header: 'Origen' },
               { key: 'estado', header: 'Estado' },
             ]}
-            rows={[]}
+            rows={eventos}
             emptyState={
               <NoContractState
                 illustration="auditoria"
@@ -103,7 +129,7 @@ export default function PanelPage() {
             </dl>
             <p className="sg-note">
               {conectado
-                ? 'El backend está conectado. Inicia sesión para consultar los datos reales según tu rol. Esta pantalla no muestra datos simulados.'
+                ? 'El backend está conectado y los módulos consultan datos reales según tu rol. Esta pantalla no muestra datos simulados.'
                 : 'Los módulos se activan a medida que el backend confirma sus contratos. Esta pantalla no muestra datos simulados.'}
             </p>
             <AppButton

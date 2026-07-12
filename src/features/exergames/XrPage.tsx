@@ -2,12 +2,27 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
-import { ModuleGate } from '../../components/feedback/ModuleGate'
+import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
+import { useApiData } from '../../services/api/useApiData'
+import { exergames } from '../../services/api/endpoints'
 
 /* Exergames XR: la pantalla operativa prioriza preparación, seguridad y
    compatibilidad. Las advertencias médicas nunca quedan ocultas. */
 export default function XrPage() {
+  const estaciones = useApiData(() => exergames.listarEstaciones())
+  const filas = (estaciones.datos ?? []).map((e) => ({
+    sesion: e.nombre,
+    deportista: 'Estación compartida',
+    equipo: e.tipoJuego,
+    preparacion: (
+      <StatusBadge
+        tone={e.estadoConexion === 'CONECTADO' ? 'success' : 'warning'}
+        label={e.estadoConexion}
+      />
+    ),
+    rendimiento: 'Disponible para sesiones',
+  }))
   return (
     <>
       <PageHeader
@@ -20,7 +35,7 @@ export default function XrPage() {
         ]}
       />
 
-      <ModuleGate contract="Sesiones XR" />
+      <ApiState estado={estaciones.estado} contract="Sesiones XR" error={estaciones.error} onRetry={estaciones.recargar} />
 
       <div className="row g-4">
         <div className="col-lg-8">
@@ -34,7 +49,7 @@ export default function XrPage() {
               { key: 'preparacion', header: 'Preparación' },
               { key: 'rendimiento', header: 'Rendimiento' },
             ]}
-            rows={[]}
+            rows={filas}
             emptyState={
               <NoContractState
                 illustration="plan"

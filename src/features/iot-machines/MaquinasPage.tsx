@@ -2,13 +2,33 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
-import { ModuleGate } from '../../components/feedback/ModuleGate'
+import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { MetricInline } from '../../components/data-display/MetricInline'
+import { useApiData } from '../../services/api/useApiData'
+import { iotMaquinas } from '../../services/api/endpoints'
 
 /* Telemetría IoT: estados diferenciados (normal, degradado, retrasado,
    desconectado). Prohibido simular datos en vivo con timers o aleatorios. */
 export default function MaquinasPage() {
+  const maquinas = useApiData(() => iotMaquinas.listar())
+  const conectadas = (maquinas.datos ?? []).filter((m) => m.estadoConexion === 'CONECTADO')
+  const calibradas = conectadas.filter((m) => m.estadoCalibracion === 'CALIBRADA')
+  const filas = (maquinas.datos ?? []).map((m) => ({
+    maquina: m.nombre,
+    zona: m.ubicacion,
+    gateway: m.tipo,
+    sincronizacion: m.fechaUltimoMantenimiento
+      ? new Date(m.fechaUltimoMantenimiento).toLocaleDateString('es-EC')
+      : 'Sin mantenimiento registrado',
+    estado: (
+      <StatusBadge
+        tone={m.estadoConexion === 'CONECTADO' ? 'success' : 'danger'}
+        label={m.estadoConexion === 'CONECTADO' ? 'Normal' : 'Desconectado'}
+        icon={m.estadoConexion === 'CONECTADO' ? 'check' : 'gateway'}
+      />
+    ),
+  }))
   return (
     <>
       <PageHeader
@@ -21,18 +41,19 @@ export default function MaquinasPage() {
         ]}
       />
 
-      <ModuleGate contract="Telemetría IoT" />
+      <ApiState
+        estado={maquinas.estado}
+        contract="Telemetría IoT"
+        error={maquinas.error}
+        onRetry={maquinas.recargar}
+      />
 
       <MotionEffect fade slide={{ direction: 'down', offset: 14 }} delay={0.1}>
         <section aria-label="Indicadores de telemetría" className="sg-surface p-3 p-md-4 mb-4">
           <div className="row g-4">
-            {['Gateways en línea', 'Máquinas sincronizadas', 'Latencia media'].map((label, i) => (
-              <div key={label} className="col-6 col-md-4">
-                <MotionEffect fade zoom={{ initialScale: 0.92 }} delay={0.16 + i * 0.05}>
-                  <MetricInline label={label} />
-                </MotionEffect>
-              </div>
-            ))}
+            <div className="col-6 col-md-4"><MetricInline label="Equipos en línea" value={String(conectadas.length)} /></div>
+            <div className="col-6 col-md-4"><MetricInline label="Máquinas sincronizadas" value={String(calibradas.length)} /></div>
+            <div className="col-6 col-md-4"><MetricInline label="Inventario total" value={String((maquinas.datos ?? []).length)} /></div>
           </div>
         </section>
       </MotionEffect>
@@ -49,12 +70,12 @@ export default function MaquinasPage() {
               { key: 'sincronizacion', header: 'Última sincronización' },
               { key: 'estado', header: 'Estado' },
             ]}
-            rows={[]}
+            rows={filas}
             emptyState={
               <NoContractState
                 illustration="iot"
                 title="Sin máquinas conectadas"
-                body="El inventario aparecerá cuando el gateway IoT reporte telemetría."
+                body="No existen máquinas registradas en el backend."
               />
             }
           />
