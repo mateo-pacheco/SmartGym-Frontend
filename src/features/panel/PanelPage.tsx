@@ -6,11 +6,14 @@ import { NoContractState } from '../../components/feedback/NoContractState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
 import { getApiConfig } from '../../services/api/client'
+import { haySesion } from '../../services/api/auth'
 
 /* Centro de control: composición tipo sala de mando. Sin datos inventados;
-   el estado de integración es la única fuente del mensaje "sin contrato". */
+   el estado de integración refleja la conexión real con el backend. */
 export default function PanelPage() {
   const api = getApiConfig()
+  const conectado = api.status === 'configurado'
+  const conSesion = haySesion()
 
   return (
     <>
@@ -34,7 +37,9 @@ export default function PanelPage() {
             )}
           </div>
           <p className="sg-note sg-note--muted mt-3 mb-0">
-            Los indicadores se activan con los contratos de eventos y telemetría.
+            {conectado
+              ? 'Los indicadores mostrarán datos reales al iniciar sesión con un rol autorizado.'
+              : 'Los indicadores se activan con los contratos de eventos y telemetría.'}
           </p>
         </section>
       </MotionEffect>
@@ -68,8 +73,8 @@ export default function PanelPage() {
               <div>
                 <dt>Contrato API</dt>
                 <dd>
-                  {api.status === 'configurado' ? (
-                    <StatusBadge tone="success" label="Configurado" />
+                  {conectado ? (
+                    <StatusBadge tone="success" label="Configurado" icon="check" />
                   ) : (
                     <StatusBadge tone="warning" label="No confirmado" />
                   )}
@@ -78,40 +83,56 @@ export default function PanelPage() {
               <div>
                 <dt>Sesión</dt>
                 <dd>
-                  <StatusBadge tone="neutral" label="Sin autenticación" icon="privacidad" />
+                  {conSesion ? (
+                    <StatusBadge tone="success" label="Activa" icon="check" />
+                  ) : (
+                    <StatusBadge tone="neutral" label="Sin autenticación" icon="privacidad" />
+                  )}
                 </dd>
               </div>
               <div>
-                <dt>Entorno</dt>
-                <dd>Desarrollo</dd>
+                <dt>Datos en vivo</dt>
+                <dd>
+                  {conSesion ? (
+                    <StatusBadge tone="success" label="Disponibles" icon="check" />
+                  ) : (
+                    <StatusBadge tone="neutral" label="Requieren sesión" icon="reloj" />
+                  )}
+                </dd>
               </div>
             </dl>
             <p className="sg-note">
-              Los módulos se activan a medida que el backend confirma sus contratos. Esta pantalla
-              no muestra datos simulados.
+              {conectado
+                ? 'El backend está conectado. Inicia sesión para consultar los datos reales según tu rol. Esta pantalla no muestra datos simulados.'
+                : 'Los módulos se activan a medida que el backend confirma sus contratos. Esta pantalla no muestra datos simulados.'}
             </p>
-            <AppButton variant="secondary" size="sm" to="/inicio" iconEnd="flechaDerecha">
-              Conocer los módulos
+            <AppButton
+              variant="secondary"
+              size="sm"
+              to={conSesion ? '/inicio' : '/ingresar'}
+              iconEnd="flechaDerecha"
+            >
+              {conSesion ? 'Conocer los módulos' : 'Iniciar sesión'}
             </AppButton>
           </div>
 
-          <h2 className="sg-section-title mt-4">Próximos pasos de integración</h2>
+          <h2 className="sg-section-title mt-4">Contratos del backend</h2>
           <ol className="sg-nextsteps sg-surface--inset p-3 m-0">
             {[
               {
-                paso: 'Contrato de autenticación y roles',
+                paso: 'Autenticación y roles',
                 habilita: 'Sesión real, permisos por rol y reportes.',
               },
               {
-                paso: 'Contrato de manillas y accesos NFC',
+                paso: 'Manillas y accesos NFC',
                 habilita: 'Alta, bloqueo, reposición y trazabilidad de intentos.',
               },
               {
-                paso: 'Contrato de telemetría IoT',
+                paso: 'Telemetría IoT',
                 habilita: 'Gateways, latencia y estado de máquinas en vivo.',
               },
               {
-                paso: 'Contratos clínicos y de planes',
+                paso: 'Clínicos y de planes',
                 habilita: 'Expediente, alertas con severidad y revisión humana.',
               },
             ].map((item, i) => (
@@ -123,7 +144,11 @@ export default function PanelPage() {
                   <strong>{item.paso}</strong>
                   <span className="sg-nextsteps__detail">{item.habilita}</span>
                 </span>
-                <StatusBadge tone="warning" label="Pendiente" icon="reloj" />
+                {conectado ? (
+                  <StatusBadge tone="success" label="Disponible" icon="check" />
+                ) : (
+                  <StatusBadge tone="warning" label="Pendiente" icon="reloj" />
+                )}
               </li>
             ))}
           </ol>
