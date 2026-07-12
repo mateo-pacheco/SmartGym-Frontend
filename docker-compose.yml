@@ -1,7 +1,7 @@
 services:
 
   web:
-    image: mateo158/smartgymfront:v1
+    image: lildavicho/smartgymfront:v1
     ports:
       - "5173:80"
     environment:
