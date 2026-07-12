@@ -1,0 +1,34 @@
+# Dependencias y artefactos (se reconstruyen en el build)
+node_modules
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+
+# Git y tooling
+.git
+.gitignore
+.github
+
+# Carpetas de asistentes de IA
+.agents
+.codex
+.claude
+
+# Variables de entorno — NUNCA entran a la imagen (la config es de runtime).
+# Sin esto, `vite build` hornearía los valores de .env.local en el bundle.
+.env
+.env.*
+*.local
+
+# Los propios artefactos de Docker y docs
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.md
+
+# Media y capturas sueltas en la raíz (los assets reales viven en public/)
+/foto*.jpeg
+/foto*.jpg
+/video*.mp4
+/ucacue-logo-centro-mediacion.png

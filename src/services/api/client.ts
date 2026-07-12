@@ -5,6 +5,8 @@
    sin VITE_SMARTGYM_API_URL la app declara el estado "sin conexión" y no
    inventa datos (AGENTS.md §16). */
 
+import { runtimeEnv } from './runtimeEnv'
+
 export type ContractStatus = 'sin-contrato' | 'configurado'
 
 export interface ApiConfig {
@@ -13,7 +15,7 @@ export interface ApiConfig {
 }
 
 export function getApiConfig(): ApiConfig {
-  const baseUrl = import.meta.env.VITE_SMARTGYM_API_URL as string | undefined
+  const baseUrl = runtimeEnv.apiUrl
   if (!baseUrl) {
     return { status: 'sin-contrato' }
   }

@@ -1,0 +1,13 @@
+services:
+
+  web:
+    image: mateo158/smartgymfront:v1
+    ports:
+      - "5173:80"
+    environment:
+      # URL del backend desplegado en Railway.
+      VITE_SMARTGYM_API_URL: https://smartgymback-production.up.railway.app
+      # Proyecto Supabase que emite los JWT del login.
+      VITE_SUPABASE_URL: https://tpdgdzndfasuvnjvmmpu.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_e9j6V1JkjomHOcSmXOLDRw_fQUOznA8
+    restart: unless-stopped

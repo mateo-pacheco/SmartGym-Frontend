@@ -7,6 +7,7 @@
 import { getApiConfig } from './client'
 import { ApiError, clearApiToken, hasApiToken, setApiToken } from './http'
 import { accesosNfc } from './endpoints'
+import { runtimeEnv } from './runtimeEnv'
 
 export type ResultadoIngreso = 'ok' | 'sin-backend' | 'credenciales' | 'red'
 
@@ -30,8 +31,8 @@ interface SupabaseConfig {
 }
 
 function getSupabaseConfig(): SupabaseConfig | null {
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+  const url = runtimeEnv.supabaseUrl
+  const anonKey = runtimeEnv.supabaseAnonKey
   if (!url || !anonKey) return null
   return { url, anonKey }
 }

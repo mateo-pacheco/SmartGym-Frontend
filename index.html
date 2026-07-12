@@ -64,6 +64,10 @@
         }
       }
     </script>
+    <!-- Configuración de runtime (API + Supabase). En producción la sobrescribe
+         el contenedor Docker; en dev queda vacía y se usan las variables de
+         .env.local. Debe cargar antes del bundle de la app. -->
+    <script src="/config.js"></script>
     <script>
       // Evita el flash de tema: aplica la preferencia guardada antes del primer paint.
       (function () {

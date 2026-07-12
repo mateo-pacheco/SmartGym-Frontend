@@ -1,0 +1,6 @@
+# Los scripts de shell SIEMPRE con saltos de línea LF: si se clonan en Windows
+# y se copian al contenedor Linux, CRLF rompería el intérprete /bin/sh.
+*.sh text eol=lf
+
+# Normaliza el resto de texto según la plataforma.
+* text=auto
