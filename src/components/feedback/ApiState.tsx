@@ -39,6 +39,20 @@ export function ApiState({ estado, contract, error, onRetry }: ApiStateProps) {
     )
   }
 
+  if (estado === 'sin-permiso') {
+    return (
+      <div className="sg-gate" role="status">
+        <span className="sg-gate__icon" aria-hidden="true">
+          <Icon name="privacidad" size={16} />
+        </span>
+        <p className="sg-gate__text">
+          Sesión activa — este perfil no necesita acceso a los datos administrativos de{' '}
+          <strong>{contract}</strong>. Los demás módulos autorizados continúan disponibles.
+        </p>
+      </div>
+    )
+  }
+
   if (estado === 'cargando') {
     return (
       <div className="sg-gate" role="status" aria-live="polite">

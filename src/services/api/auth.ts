@@ -15,7 +15,15 @@ export interface SesionApi {
   usuario: string
 }
 
-let sesion: SesionApi | null = null
+const SESSION_USER_KEY = 'smartgym.api.user'
+
+function readStoredSession(): SesionApi | null {
+  if (typeof window === 'undefined' || !hasApiToken()) return null
+  const usuario = window.sessionStorage.getItem(SESSION_USER_KEY) ?? window.localStorage.getItem(SESSION_USER_KEY)
+  return usuario ? { usuario } : null
+}
+
+let sesion: SesionApi | null = readStoredSession()
 
 export function getSesion(): SesionApi | null {
   return sesion
@@ -64,7 +72,11 @@ async function obtenerTokenSupabase(
 /** Inicia sesión: JWT de Supabase + sondeo contra la API SmartGym.
     401 = token rechazado; 403 = autenticado sin permiso sobre el recurso de
     sondeo (la sesión sigue siendo válida para su rol). */
-export async function iniciarSesion(usuario: string, clave: string): Promise<ResultadoIngreso> {
+export async function iniciarSesion(
+  usuario: string,
+  clave: string,
+  recordar = false,
+): Promise<ResultadoIngreso> {
   const supabase = getSupabaseConfig()
   if (getApiConfig().status !== 'configurado' || !supabase) {
     return 'sin-backend'
@@ -75,14 +87,18 @@ export async function iniciarSesion(usuario: string, clave: string): Promise<Res
     return resultado
   }
 
-  setApiToken(resultado.token)
+  setApiToken(resultado.token, recordar)
   try {
     await accesosNfc.consultar({ size: 1 })
     sesion = { usuario }
+    window.sessionStorage.setItem(SESSION_USER_KEY, usuario)
+    if (recordar) window.localStorage.setItem(SESSION_USER_KEY, usuario)
     return 'ok'
   } catch (error) {
     if (error instanceof ApiError && error.status === 403) {
       sesion = { usuario }
+      window.sessionStorage.setItem(SESSION_USER_KEY, usuario)
+      if (recordar) window.localStorage.setItem(SESSION_USER_KEY, usuario)
       return 'ok'
     }
     clearApiToken()
@@ -96,4 +112,8 @@ export async function iniciarSesion(usuario: string, clave: string): Promise<Res
 export function cerrarSesion(): void {
   sesion = null
   clearApiToken()
+  if (typeof window !== 'undefined') {
+    window.sessionStorage.removeItem(SESSION_USER_KEY)
+    window.localStorage.removeItem(SESSION_USER_KEY)
+  }
 }

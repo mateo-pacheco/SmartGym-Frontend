@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Icon } from '../icons/Icon'
 import { MotionEffect } from '../animate-ui/motion-effect'
 import { getApiConfig } from '../../services/api/client'
+import { haySesion } from '../../services/api/auth'
 
 export interface ModuleGateProps {
   /** Nombre del contrato de backend que activa este módulo (no una URL). */
@@ -13,6 +14,7 @@ export interface ModuleGateProps {
    sesión; si no, declara que el contrato está en integración. */
 export function ModuleGate({ contract }: ModuleGateProps) {
   const conectado = getApiConfig().status === 'configurado'
+  const sesionActiva = haySesion()
 
   return (
     <MotionEffect fade slide={{ direction: 'down', offset: 14 }} delay={0.06}>
@@ -20,7 +22,11 @@ export function ModuleGate({ contract }: ModuleGateProps) {
         <span className="sg-gate__icon" aria-hidden="true">
           <Icon name={conectado ? 'privacidad' : 'reloj'} size={16} />
         </span>
-        {conectado ? (
+        {conectado && sesionActiva ? (
+          <p className="sg-gate__text">
+            Backend conectado — <strong>{contract}</strong> disponible con tu sesión activa.
+          </p>
+        ) : conectado ? (
           <>
             <p className="sg-gate__text">
               Backend conectado — inicia sesión para consultar los datos de{' '}

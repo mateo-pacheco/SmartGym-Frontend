@@ -17,15 +17,29 @@ export class ApiError extends Error {
   }
 }
 
-let bearerToken: string | null = null
+const SESSION_TOKEN_KEY = 'smartgym.api.token'
+
+function readStoredToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return window.sessionStorage.getItem(SESSION_TOKEN_KEY) ?? window.localStorage.getItem(SESSION_TOKEN_KEY)
+}
+
+let bearerToken: string | null = readStoredToken()
 
 /** Establece el JWT de la sesión (Authorization: Bearer <token>). */
-export function setApiToken(token: string): void {
+export function setApiToken(token: string, persist = false): void {
   bearerToken = token
+  if (typeof window === 'undefined') return
+  window.sessionStorage.setItem(SESSION_TOKEN_KEY, token)
+  if (persist) window.localStorage.setItem(SESSION_TOKEN_KEY, token)
+  else window.localStorage.removeItem(SESSION_TOKEN_KEY)
 }
 
 export function clearApiToken(): void {
   bearerToken = null
+  if (typeof window === 'undefined') return
+  window.sessionStorage.removeItem(SESSION_TOKEN_KEY)
+  window.localStorage.removeItem(SESSION_TOKEN_KEY)
 }
 
 export function hasApiToken(): boolean {

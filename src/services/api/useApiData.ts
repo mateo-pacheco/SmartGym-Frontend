@@ -6,7 +6,13 @@ import { getApiConfig } from './client'
 import { ApiError } from './http'
 import { haySesion } from './auth'
 
-export type EstadoApi = 'sin-backend' | 'sin-sesion' | 'cargando' | 'error' | 'listo'
+export type EstadoApi =
+  | 'sin-backend'
+  | 'sin-sesion'
+  | 'sin-permiso'
+  | 'cargando'
+  | 'error'
+  | 'listo'
 
 export interface ApiData<T> {
   estado: EstadoApi
@@ -52,6 +58,11 @@ export function useApiData<T>(
       })
       .catch((causa: unknown) => {
         if (!activo) return
+        if (causa instanceof ApiError && causa.status === 403) {
+          setError(null)
+          setEstado('sin-permiso')
+          return
+        }
         setError(
           causa instanceof ApiError
             ? causa.message

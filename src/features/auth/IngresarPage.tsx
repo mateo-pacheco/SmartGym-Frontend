@@ -34,6 +34,7 @@ export default function IngresarPage() {
   const [campos, setCampos] = useState<Campos>({ correo: '', clave: '' })
   const [errores, setErrores] = useState<Partial<Campos>>({})
   const [verClave, setVerClave] = useState(false)
+  const [recordar, setRecordar] = useState(false)
   const [notice, setNotice] = useState<Notice>(null)
   const [enviando, setEnviando] = useState(false)
   const enterPlatform = usePlatformTransition()
@@ -98,7 +99,7 @@ export default function IngresarPage() {
     if (Object.keys(nextErrors).length > 0) return
 
     setEnviando(true)
-    const resultado = await iniciarSesion(campos.correo.trim(), campos.clave)
+    const resultado = await iniciarSesion(campos.correo.trim(), campos.clave, recordar)
     setEnviando(false)
 
     if (resultado === 'ok') {
@@ -212,7 +213,12 @@ export default function IngresarPage() {
 
                 <div className="ingresar__options">
                   <label className="ingresar__remember" htmlFor="ingresar-recordar">
-                    <input id="ingresar-recordar" type="checkbox" />
+                    <input
+                      id="ingresar-recordar"
+                      type="checkbox"
+                      checked={recordar}
+                      onChange={(event) => setRecordar(event.target.checked)}
+                    />
                     <span>Recordarme</span>
                   </label>
                   <button type="button" className="ingresar__forgot" onClick={abrirRecuperacion}>
