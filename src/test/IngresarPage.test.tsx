@@ -1,9 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider } from '../app/providers/ThemeProvider'
 import IngresarPage from '../features/auth/IngresarPage'
+
+/* El resultado del ingreso depende del entorno (VITE_* en .env.local); se
+   fija 'sin-backend' para que el aviso probado sea determinista. */
+vi.mock('../services/api/auth', () => ({
+  iniciarSesion: vi.fn(async () => 'sin-backend'),
+}))
 
 function renderIngresar() {
   return render(

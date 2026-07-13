@@ -659,6 +659,114 @@ p {
   background: var(--sg-surface-raised);
 }
 
+/* ---------- Paginación de tablas ----------
+   Medida predefinida por página: la tabla nunca crece "hasta abajo";
+   el recorrido largo se navega con páginas numeradas (1 · 2 · 3 · 4). */
+.sg-table-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.sg-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.sg-pagination__resumen {
+  margin: 0;
+  color: var(--sg-text-muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sg-pagination__controles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sg-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--sg-radius-sm);
+  background: transparent;
+  color: var(--sg-text-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--sg-motion-fast) var(--sg-ease-product),
+    border-color var(--sg-motion-fast) var(--sg-ease-product),
+    color var(--sg-motion-fast) var(--sg-ease-product);
+}
+
+.sg-pagination__btn:hover:not(:disabled) {
+  background: var(--sg-surface-raised);
+  color: var(--sg-text-primary);
+}
+
+.sg-pagination__btn:focus-visible {
+  outline: 2px solid var(--sg-focus);
+  outline-offset: 2px;
+}
+
+.sg-pagination__btn--activa {
+  border-color: var(--sg-border-strong);
+  background: var(--sg-surface);
+  color: var(--sg-text-primary);
+}
+
+.sg-pagination__btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.sg-pagination__btn--nav svg {
+  fill: currentColor;
+}
+
+.sg-pagination__btn--nav:not(.sg-pagination__btn--siguiente) svg {
+  transform: rotate(180deg);
+}
+
+.sg-pagination__gap {
+  min-width: 20px;
+  text-align: center;
+  color: var(--sg-text-muted);
+  font-size: 0.82rem;
+}
+
+/* En pantallas táctiles compactas los botones crecen al mínimo táctil. */
+@media (pointer: coarse) {
+  .sg-pagination__btn {
+    min-width: 42px;
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .sg-pagination {
+    justify-content: center;
+  }
+
+  .sg-pagination__resumen {
+    width: 100%;
+    text-align: center;
+    order: 2;
+  }
+}
+
 /* ---------- Estados ---------- */
 .sg-empty {
   display: grid;
@@ -748,10 +856,21 @@ p {
 
 .sg-deflist > div {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 16px;
+  gap: 6px 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--sg-border);
+}
+
+/* El término puede encoger; la insignia envuelve debajo si no cabe. */
+.sg-deflist dt {
+  flex: 1 1 16ch;
+  min-width: 0;
+}
+
+.sg-deflist dd {
+  flex: 0 0 auto;
 }
 
 .sg-deflist > div:last-child {
@@ -1212,11 +1331,24 @@ p {
 
 .sg-nextsteps li {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
   padding: 12px 2px;
   border-bottom: 1px solid var(--sg-border);
+}
+
+/* La insignia de estado baja bajo el texto cuando la columna es angosta
+   (col-lg-4 en portátiles de 992–1200px). */
+@media (max-width: 1199.98px) {
+  .sg-nextsteps li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .sg-nextsteps li > .sg-status {
+    grid-column: 2;
+    justify-self: start;
+  }
 }
 
 .sg-nextsteps li:last-child {
