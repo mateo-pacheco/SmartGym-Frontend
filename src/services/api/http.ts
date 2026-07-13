@@ -98,6 +98,20 @@ export function hasApiToken(): boolean {
   return bearerToken !== null
 }
 
+/** Identificador estable del usuario autenticado (`sub` del JWT de Supabase). */
+export function getApiSubject(): string | null {
+  if (!bearerToken) return null
+  try {
+    const payload = bearerToken.split('.')[1]
+    if (!payload) return null
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const decoded = JSON.parse(atob(normalized)) as { sub?: unknown }
+    return typeof decoded.sub === 'string' ? decoded.sub : null
+  } catch {
+    return null
+  }
+}
+
 export type QueryValue = string | number | boolean | undefined
 
 function buildUrl(path: string, query?: Record<string, QueryValue>): string {

@@ -7,41 +7,27 @@ import { NoContractState } from '../../components/feedback/NoContractState'
 import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
-import { useDrafts } from '../../services/drafts/useDrafts'
 import { NuevoDeportistaModal } from './NuevoDeportistaModal'
 import { useApiData } from '../../services/api/useApiData'
 import { clinicalEvaluations } from '../../services/api/endpoints'
 
-/* Deportistas y expediente: contexto clínico calmado, sin decoración,
-   exposición mínima de datos de salud (AGENTS.md §15). */
 export default function DeportistasPage() {
   const [busqueda, setBusqueda] = useState('')
   const [modalAbierto, setModalAbierto] = useState(false)
-  const { deportistas } = useDrafts()
   const evaluaciones = useApiData(() => clinicalEvaluations.listar())
 
   const filtro = busqueda.trim().toLowerCase()
-  const filasBackend = Array.from(
-    new Map((evaluaciones.datos ?? []).map((e) => [e.deportistaId, e])).values(),
-  ).map((e) => ({
-    nombre: e.deportistaId,
-    programa: e.diagnostico,
-    aptitud: <StatusBadge tone="success" label="Evaluado" icon="check" />,
-    ultimaEvaluacion: new Date(e.fechaEvaluacion).toLocaleDateString('es-EC'),
-    acciones: <StatusBadge tone="info" label={`RPE ${e.rpe ?? '—'}`} icon="pulso" />,
-  }))
-  const filasLocales = deportistas
-    .filter((d) => !filtro || d.nombre.toLowerCase().includes(filtro))
-    .map((d) => ({
-      nombre: d.nombre,
-      programa: d.programa,
-      aptitud: <StatusBadge tone="neutral" label="Sin evaluación" icon="reloj" />,
-      ultimaEvaluacion: 'Pendiente',
-      acciones: <StatusBadge tone="neutral" label="Borrador local" icon="reloj" />,
-    }))
-  const filas = [...filasBackend, ...filasLocales].filter(
-    (fila) => !filtro || fila.nombre.toLowerCase().includes(filtro),
+  const filas = Array.from(
+    new Map((evaluaciones.datos ?? []).map((evaluacion) => [evaluacion.deportistaId, evaluacion])).values(),
   )
+    .map((evaluacion) => ({
+      nombre: evaluacion.deportistaId,
+      programa: evaluacion.diagnostico,
+      aptitud: <StatusBadge tone="success" label="Evaluado" icon="check" />,
+      ultimaEvaluacion: new Date(evaluacion.fechaEvaluacion).toLocaleDateString('es-EC'),
+      acciones: <StatusBadge tone="info" label={`RPE ${evaluacion.rpe ?? '—'}`} icon="pulso" />,
+    }))
+    .filter((fila) => !filtro || fila.nombre.toLowerCase().includes(filtro))
 
   return (
     <>
@@ -54,21 +40,26 @@ export default function DeportistasPage() {
           { label: 'Deportistas' },
         ]}
         actions={
-          <AppButton icon="mas" onClick={() => setModalAbierto(true)}>
-            Nuevo deportista
+          <AppButton icon="mas" onClick={() => setModalAbierto(true)} disabled={evaluaciones.estado !== 'listo'}>
+            Nueva evaluación
           </AppButton>
         }
       />
 
-      <ApiState estado={evaluaciones.estado} contract="Deportistas y expediente" error={evaluaciones.error} onRetry={evaluaciones.recargar} />
+      <ApiState
+        estado={evaluaciones.estado}
+        contract="Deportistas y expediente"
+        error={evaluaciones.error}
+        onRetry={evaluaciones.recargar}
+      />
 
       <FilterBar label="Búsqueda de deportistas">
         <div>
           <span className="sg-field-label d-block">Buscar</span>
           <SearchField
             id="buscar-deportista"
-            label="Buscar deportista por nombre"
-            placeholder="Nombre del deportista"
+            label="Buscar deportista por identificador"
+            placeholder="ID del deportista"
             value={busqueda}
             onChange={setBusqueda}
           />
@@ -76,11 +67,11 @@ export default function DeportistasPage() {
       </FilterBar>
 
       <DataTable
-        caption="Deportistas registrados con su estado de aptitud"
+        caption="Deportistas con evaluaciones clínicas registradas"
         columns={[
           { key: 'nombre', header: 'Deportista' },
-          { key: 'programa', header: 'Programa' },
-          { key: 'aptitud', header: 'Aptitud' },
+          { key: 'programa', header: 'Diagnóstico' },
+          { key: 'aptitud', header: 'Estado' },
           { key: 'ultimaEvaluacion', header: 'Última evaluación' },
           { key: 'acciones', header: 'Expediente', align: 'end' },
         ]}
@@ -88,18 +79,22 @@ export default function DeportistasPage() {
         emptyState={
           <NoContractState
             illustration="riesgo"
-            title="Aún no hay deportistas registrados"
-            body="No existen evaluaciones clínicas ni borradores registrados."
+            title="Aún no hay evaluaciones registradas"
+            body="No existen evaluaciones clínicas registradas en el backend."
             action={
               <AppButton size="sm" icon="mas" onClick={() => setModalAbierto(true)}>
-                Nuevo deportista
+                Nueva evaluación
               </AppButton>
             }
           />
         }
       />
 
-      <NuevoDeportistaModal show={modalAbierto} onHide={() => setModalAbierto(false)} />
+      <NuevoDeportistaModal
+        show={modalAbierto}
+        onHide={() => setModalAbierto(false)}
+        onSaved={evaluaciones.recargar}
+      />
     </>
   )
 }

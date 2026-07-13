@@ -1,119 +1,197 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import { AppButton } from '../../components/actions/AppButton'
-import { useDrafts } from '../../services/drafts/useDrafts'
 import { useToast } from '../../app/providers/useToast'
+import { agendamiento } from '../../services/api/endpoints'
+import { getSesion } from '../../services/api/auth'
+import { ApiError } from '../../services/api/http'
+import type { EspacioZonaResponseDTO, SlotHorarioResponseDTO } from '../../services/api/types'
 
 interface Campos {
   fecha: string
-  franja: string
-  zona: string
-  deportista: string
+  espacioId: string
+  slotId: string
 }
 
-const CAMPOS_INICIALES: Campos = { fecha: '', franja: '', zona: '', deportista: '' }
+const hoy = () => new Date().toISOString().slice(0, 10)
+const camposIniciales = (): Campos => ({ fecha: hoy(), espacioId: '', slotId: '' })
 
-export function CrearReservaModal({ show, onHide }: { show: boolean; onHide: () => void }) {
-  const [campos, setCampos] = useState<Campos>(CAMPOS_INICIALES)
+interface CrearReservaModalProps {
+  show: boolean
+  onHide: () => void
+  espacios: EspacioZonaResponseDTO[]
+  onSaved: () => void
+}
+
+export function CrearReservaModal({ show, onHide, espacios, onSaved }: CrearReservaModalProps) {
+  const [campos, setCampos] = useState<Campos>(camposIniciales)
+  const [slots, setSlots] = useState<SlotHorarioResponseDTO[]>([])
   const [errores, setErrores] = useState<Partial<Campos>>({})
-  const { addReserva } = useDrafts()
+  const [cargandoSlots, setCargandoSlots] = useState(false)
+  const [guardando, setGuardando] = useState(false)
+  const [errorApi, setErrorApi] = useState<string | null>(null)
   const { showToast } = useToast()
 
+  useEffect(() => {
+    if (!show || !campos.fecha || !campos.espacioId) {
+      setSlots([])
+      return
+    }
+    let activo = true
+    setCargandoSlots(true)
+    setErrorApi(null)
+    agendamiento
+      .slots(campos.espacioId, campos.fecha)
+      .then((datos) => {
+        if (!activo) return
+        setSlots(datos)
+        setCampos((actual) => ({
+          ...actual,
+          slotId: datos.some((slot) => slot.id === actual.slotId) ? actual.slotId : '',
+        }))
+      })
+      .catch((error: unknown) => {
+        if (!activo) return
+        setSlots([])
+        setErrorApi(error instanceof ApiError ? error.message : 'No se pudieron consultar las franjas.')
+      })
+      .finally(() => activo && setCargandoSlots(false))
+    return () => {
+      activo = false
+    }
+  }, [show, campos.fecha, campos.espacioId])
+
   const set = (k: keyof Campos) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setCampos((c) => ({ ...c, [k]: e.target.value }))
-    setErrores((err) => ({ ...err, [k]: undefined }))
+    const value = e.target.value
+    setCampos((actual) => ({
+      ...actual,
+      [k]: value,
+      ...(k === 'fecha' || k === 'espacioId' ? { slotId: '' } : {}),
+    }))
+    setErrores((actual) => ({ ...actual, [k]: undefined }))
   }
 
   const cerrar = () => {
+    if (guardando) return
     onHide()
-    setCampos(CAMPOS_INICIALES)
+    setCampos(camposIniciales())
+    setSlots([])
     setErrores({})
+    setErrorApi(null)
   }
 
-  const guardar = () => {
+  const guardar = async () => {
     const err: Partial<Campos> = {}
     if (!campos.fecha) err.fecha = 'Selecciona la fecha de la reserva.'
-    if (!campos.franja) err.franja = 'Selecciona una franja horaria.'
-    if (!campos.zona) err.zona = 'Selecciona la zona a reservar.'
-    if (!campos.deportista.trim()) err.deportista = 'Escribe quién reserva.'
+    if (!campos.espacioId) err.espacioId = 'Selecciona la zona a reservar.'
+    if (!campos.slotId) err.slotId = 'Selecciona una franja disponible.'
     setErrores(err)
     if (Object.keys(err).length > 0) return
 
-    addReserva({ ...campos, deportista: campos.deportista.trim() })
-    showToast({
-      title: 'Reserva guardada como borrador local',
-      body: 'Se sincronizará cuando el contrato de agenda esté confirmado.',
-    })
-    cerrar()
+    const sesion = getSesion()
+    if (!sesion) {
+      setErrorApi('La sesión expiró. Inicia sesión nuevamente para crear la reserva.')
+      return
+    }
+
+    setGuardando(true)
+    setErrorApi(null)
+    try {
+      await agendamiento.crearReserva({
+        usuarioId: sesion.id,
+        slotId: campos.slotId,
+        tipo: 'CUPO_GIMNASIO',
+      })
+      showToast({
+        title: 'Reserva confirmada',
+        body: 'La reserva se guardó en el servidor y el cupo quedó actualizado.',
+      })
+      onSaved()
+      onHide()
+      setCampos(camposIniciales())
+      setSlots([])
+      setErrores({})
+    } catch (error) {
+      setErrorApi(error instanceof ApiError ? error.message : 'No se pudo guardar la reserva.')
+    } finally {
+      setGuardando(false)
+    }
   }
+
+  const disponibles = slots.filter(
+    (slot) => slot.estado === 'DISPONIBLE' && slot.cuposDisponibles > 0,
+  )
 
   return (
     <Modal show={show} onHide={cerrar} centered aria-labelledby="titulo-crear-reserva">
-      <Modal.Header closeButton closeLabel="Cerrar sin guardar">
+      <Modal.Header closeButton={!guardando} closeLabel="Cerrar sin guardar">
         <Modal.Title id="titulo-crear-reserva" className="fs-5">
           Crear reserva
         </Modal.Title>
       </Modal.Header>
       <Modal.Body className="d-grid gap-3">
-        <div className="row g-3">
-          <Form.Group className="col-6" controlId="reserva-fecha">
-            <Form.Label className="sg-field-label">Fecha</Form.Label>
-            <Form.Control
-              type="date"
-              value={campos.fecha}
-              onChange={set('fecha')}
-              isInvalid={!!errores.fecha}
-              autoFocus
-            />
-            <Form.Control.Feedback type="invalid">{errores.fecha}</Form.Control.Feedback>
-          </Form.Group>
-          <Form.Group className="col-6" controlId="reserva-franja">
-            <Form.Label className="sg-field-label">Franja horaria</Form.Label>
-            <Form.Select value={campos.franja} onChange={set('franja')} isInvalid={!!errores.franja}>
-              <option value="">Selecciona</option>
-              <option>06:00 a 08:00</option>
-              <option>08:00 a 10:00</option>
-              <option>10:00 a 12:00</option>
-              <option>14:00 a 16:00</option>
-              <option>16:00 a 18:00</option>
-              <option>18:00 a 20:00</option>
-            </Form.Select>
-            <Form.Control.Feedback type="invalid">{errores.franja}</Form.Control.Feedback>
-          </Form.Group>
-        </div>
+        <Form.Group controlId="reserva-fecha">
+          <Form.Label className="sg-field-label">Fecha</Form.Label>
+          <Form.Control
+            type="date"
+            min={hoy()}
+            value={campos.fecha}
+            onChange={set('fecha')}
+            isInvalid={!!errores.fecha}
+            autoFocus
+          />
+          <Form.Control.Feedback type="invalid">{errores.fecha}</Form.Control.Feedback>
+        </Form.Group>
         <Form.Group controlId="reserva-zona">
           <Form.Label className="sg-field-label">Zona</Form.Label>
-          <Form.Select value={campos.zona} onChange={set('zona')} isInvalid={!!errores.zona}>
+          <Form.Select
+            value={campos.espacioId}
+            onChange={set('espacioId')}
+            isInvalid={!!errores.espacioId}
+          >
             <option value="">Selecciona la zona</option>
-            <option>Sala de fuerza</option>
-            <option>Zona cardio</option>
-            <option>Estudio XR</option>
-            <option>Pista exterior</option>
+            {espacios.map((espacio) => (
+              <option key={espacio.id} value={espacio.id}>
+                {espacio.nombre} · {espacio.capacidadMaxima} personas
+              </option>
+            ))}
           </Form.Select>
-          <Form.Control.Feedback type="invalid">{errores.zona}</Form.Control.Feedback>
+          <Form.Control.Feedback type="invalid">{errores.espacioId}</Form.Control.Feedback>
         </Form.Group>
-        <Form.Group controlId="reserva-deportista">
-          <Form.Label className="sg-field-label">Deportista o grupo</Form.Label>
-          <Form.Control
-            value={campos.deportista}
-            onChange={set('deportista')}
-            isInvalid={!!errores.deportista}
-            placeholder="Nombre del deportista o del grupo"
-          />
-          <Form.Control.Feedback type="invalid">{errores.deportista}</Form.Control.Feedback>
+        <Form.Group controlId="reserva-franja">
+          <Form.Label className="sg-field-label">Franja horaria</Form.Label>
+          <Form.Select
+            value={campos.slotId}
+            onChange={set('slotId')}
+            isInvalid={!!errores.slotId}
+            disabled={!campos.espacioId || cargandoSlots}
+          >
+            <option value="">
+              {cargandoSlots ? 'Consultando disponibilidad…' : 'Selecciona una franja'}
+            </option>
+            {disponibles.map((slot) => (
+              <option key={slot.id} value={slot.id}>
+                {slot.horaInicio} a {slot.horaFin} · {slot.cuposDisponibles} cupos
+              </option>
+            ))}
+          </Form.Select>
+          <Form.Control.Feedback type="invalid">{errores.slotId}</Form.Control.Feedback>
+          {!cargandoSlots && campos.espacioId && disponibles.length === 0 ? (
+            <Form.Text className="sg-field-hint">No hay franjas disponibles para esta fecha.</Form.Text>
+          ) : null}
         </Form.Group>
+        {errorApi ? <p className="m-0 sg-form-note text-danger" role="alert">{errorApi}</p> : null}
         <p className="m-0 sg-form-note">
-          Sin contrato de agenda confirmado, la reserva queda como borrador local: no bloquea aforo
-          real ni se envía a ningún servidor.
+          La reserva se registra en el backend y actualiza el cupo disponible de la franja.
         </p>
       </Modal.Body>
       <Modal.Footer className="justify-content-between">
-        <AppButton variant="ghost" onClick={cerrar}>
+        <AppButton variant="ghost" onClick={cerrar} disabled={guardando}>
           Cancelar reserva
         </AppButton>
-        <AppButton icon="check" onClick={guardar}>
-          Guardar borrador local
+        <AppButton icon="check" onClick={guardar} disabled={guardando || cargandoSlots}>
+          {guardando ? 'Guardando…' : 'Confirmar reserva'}
         </AppButton>
       </Modal.Footer>
     </Modal>

@@ -6,24 +6,19 @@ import { NoContractState } from '../../components/feedback/NoContractState'
 import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
-import { useDrafts } from '../../services/drafts/useDrafts'
 import { CrearReservaModal } from './CrearReservaModal'
 import { useApiData } from '../../services/api/useApiData'
 import { agendamiento } from '../../services/api/endpoints'
 
-/* Agenda y aforo: prioriza disponibilidad, ocupación y prevención de
-   conflictos. El calendario accesible llegará con el contrato real. */
 export default function AgendaPage() {
   const [modalAbierto, setModalAbierto] = useState(false)
-  const { reservas } = useDrafts()
   const espacios = useApiData(() => agendamiento.listarEspacios())
 
-  const filas = reservas.map((r) => ({
-    franja: `${r.fecha} · ${r.franja}`,
-    zona: r.zona,
-    deportista: r.deportista,
-    ocupacion: '—',
-    estado: <StatusBadge tone="neutral" label="Borrador local" icon="reloj" />,
+  const filas = (espacios.datos ?? []).map((espacio) => ({
+    zona: espacio.nombre,
+    tipo: espacio.tipo.replace(/_/g, ' '),
+    capacidad: `${espacio.capacidadMaxima} personas`,
+    estado: <StatusBadge tone="success" label="Disponible para agenda" icon="check" />,
   }))
 
   return (
@@ -37,37 +32,36 @@ export default function AgendaPage() {
           { label: 'Agenda y aforo' },
         ]}
         actions={
-          <AppButton icon="mas" onClick={() => setModalAbierto(true)}>
+          <AppButton icon="mas" onClick={() => setModalAbierto(true)} disabled={espacios.estado !== 'listo'}>
             Crear reserva
           </AppButton>
         }
       />
 
-      <ApiState estado={espacios.estado} contract="Reservas y aforo" error={espacios.error} onRetry={espacios.recargar} />
+      <ApiState
+        estado={espacios.estado}
+        contract="Reservas y aforo"
+        error={espacios.error}
+        onRetry={espacios.recargar}
+      />
 
       <div className="row g-4">
         <div className="col-lg-8">
-          <h2 className="sg-section-title">Reservas del día</h2>
+          <h2 className="sg-section-title">Zonas habilitadas para reserva</h2>
           <DataTable
-            caption="Reservas del día ordenadas por franja horaria"
+            caption="Zonas y capacidades registradas en el servidor"
             columns={[
-              { key: 'franja', header: 'Franja' },
               { key: 'zona', header: 'Zona' },
-              { key: 'deportista', header: 'Deportista' },
-              { key: 'ocupacion', header: 'Ocupación', align: 'end' },
+              { key: 'tipo', header: 'Tipo' },
+              { key: 'capacidad', header: 'Capacidad', align: 'end' },
               { key: 'estado', header: 'Estado' },
             ]}
             rows={filas}
             emptyState={
               <NoContractState
                 illustration="agenda"
-                title="Aún no hay reservas"
-                body="Crea un borrador local mientras el módulo se conecta al backend."
-                action={
-                  <AppButton size="sm" icon="mas" onClick={() => setModalAbierto(true)}>
-                    Crear reserva
-                  </AppButton>
-                }
+                title="No hay zonas configuradas"
+                body="El backend respondió correctamente, pero todavía no existen espacios para reservar."
               />
             }
           />
@@ -84,13 +78,18 @@ export default function AgendaPage() {
               ))}
             </dl>
             <p className="sg-note sg-note--muted mt-2">
-              Capacidades registradas en el backend para controlar reservas y aforo.
+              Al crear una reserva, las franjas y cupos se consultan directamente en el backend.
             </p>
           </MotionEffect>
         </div>
       </div>
 
-      <CrearReservaModal show={modalAbierto} onHide={() => setModalAbierto(false)} />
+      <CrearReservaModal
+        show={modalAbierto}
+        onHide={() => setModalAbierto(false)}
+        espacios={espacios.datos ?? []}
+        onSaved={espacios.recargar}
+      />
     </>
   )
 }

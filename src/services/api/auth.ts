@@ -5,7 +5,7 @@
    API. Token y credenciales viven solo en memoria; jamás en storage. */
 
 import { getApiConfig } from './client'
-import { ApiError, clearApiToken, hasApiToken, setApiToken } from './http'
+import { ApiError, clearApiToken, getApiSubject, hasApiToken, setApiToken } from './http'
 import { accesosNfc } from './endpoints'
 import { runtimeEnv } from './runtimeEnv'
 
@@ -13,6 +13,7 @@ export type ResultadoIngreso = 'ok' | 'sin-backend' | 'credenciales' | 'red'
 
 export interface SesionApi {
   usuario: string
+  id: string
 }
 
 const SESSION_USER_KEY = 'smartgym.api.user'
@@ -20,7 +21,8 @@ const SESSION_USER_KEY = 'smartgym.api.user'
 function readStoredSession(): SesionApi | null {
   if (typeof window === 'undefined' || !hasApiToken()) return null
   const usuario = window.sessionStorage.getItem(SESSION_USER_KEY) ?? window.localStorage.getItem(SESSION_USER_KEY)
-  return usuario ? { usuario } : null
+  const id = getApiSubject()
+  return usuario && id ? { usuario, id } : null
 }
 
 let sesion: SesionApi | null = readStoredSession()
@@ -104,13 +106,17 @@ export async function iniciarSesion(
   setApiToken(resultado.token, recordar, resultado.refreshToken, resultado.expiresIn)
   try {
     await accesosNfc.consultar({ size: 1 })
-    sesion = { usuario }
+    const id = getApiSubject()
+    if (!id) throw new ApiError(401, { message: 'El token no contiene un identificador de usuario.' })
+    sesion = { usuario, id }
     window.sessionStorage.setItem(SESSION_USER_KEY, usuario)
     if (recordar) window.localStorage.setItem(SESSION_USER_KEY, usuario)
     return 'ok'
   } catch (error) {
     if (error instanceof ApiError && error.status === 403) {
-      sesion = { usuario }
+      const id = getApiSubject()
+      if (!id) throw new ApiError(401, { message: 'El token no contiene un identificador de usuario.' })
+      sesion = { usuario, id }
       window.sessionStorage.setItem(SESSION_USER_KEY, usuario)
       if (recordar) window.localStorage.setItem(SESSION_USER_KEY, usuario)
       return 'ok'

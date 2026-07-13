@@ -8,34 +8,72 @@ import { NoContractState } from '../../components/feedback/NoContractState'
 import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
-import { useDrafts } from '../../services/drafts/useDrafts'
 import { useApiData } from '../../services/api/useApiData'
 import { accesosNfc } from '../../services/api/endpoints'
+import { getSesion } from '../../services/api/auth'
+import type { ManillaNfcResponseDTO } from '../../services/api/types'
 import { RegistrarManillaModal } from './RegistrarManillaModal'
 
 const formatearFecha = (iso: string) =>
   new Date(iso).toLocaleString('es-EC', { dateStyle: 'medium', timeStyle: 'short' })
 
-/* Acceso NFC: tabla primero, sin fotos ni scroll animation (AGENTS.md §15).
-   Nunca se muestran valores NFC, HMAC ni credenciales. */
 export default function AccesosPage() {
   const [busqueda, setBusqueda] = useState('')
   const [estado, setEstado] = useState('todos')
   const [modalAbierto, setModalAbierto] = useState(false)
-  const { manillas } = useDrafts()
-  const accesos = useApiData(() => accesosNfc.consultar({ size: 25 }))
+  const [registradas, setRegistradas] = useState<ManillaNfcResponseDTO[]>([])
+  const accesos = useApiData(() => accesosNfc.consultar({ size: 50 }))
 
   const filtro = busqueda.trim().toLowerCase()
-  const filas = manillas
-    .filter((m) => !filtro || m.deportista.toLowerCase().includes(filtro) || m.identificador.toLowerCase().includes(filtro))
-    .filter(() => estado === 'todos' || estado === 'borrador')
+  const accesosPorManilla = new Map(
+    (accesos.datos?.content ?? []).map((acceso) => [acceso.manillaId, acceso]),
+  )
+  const manillasConActividad = Array.from(accesosPorManilla.values()).map((acceso) => ({
+    id: acceso.manillaId,
+    deportistaId: acceso.deportistaId,
+    identificador: `•••• ${acceso.manillaId.slice(-8)}`,
+    estado: 'REGISTRADA',
+    ultimoAcceso: formatearFecha(acceso.fechaHoraServidor),
+  }))
+  const manillasNuevas = registradas.map((manilla) => ({
+    id: manilla.id,
+    deportistaId: manilla.deportistaId,
+    identificador: manilla.codigoNfcMascara,
+    estado: manilla.estado,
+    ultimoAcceso: 'Sin actividad',
+  }))
+  const filas = [
+    ...manillasNuevas,
+    ...manillasConActividad.filter((m) => !registradas.some((n) => n.id === m.id)),
+  ]
+    .filter(
+      (m) =>
+        !filtro ||
+        m.deportistaId.toLowerCase().includes(filtro) ||
+        m.identificador.toLowerCase().includes(filtro),
+    )
+    .filter((m) => estado === 'todos' || m.estado.toLowerCase().includes(estado))
     .map((m) => ({
-      deportista: m.deportista,
+      deportista: m.deportistaId,
       identificador: m.identificador,
-      estado: <StatusBadge tone="neutral" label="Borrador local" icon="reloj" />,
-      ultimoAcceso: 'Sin actividad',
-      acciones: <span className="sg-note--muted">Se habilita con el contrato</span>,
+      estado: (
+        <StatusBadge
+          tone="success"
+          label={m.estado === 'REGISTRADA' ? 'Registrada' : m.estado}
+          icon="check"
+        />
+      ),
+      ultimoAcceso: m.ultimoAcceso,
+      acciones: <span className="sg-note--muted">Sincronizada</span>,
     }))
+
+  const sesionId = getSesion()?.id
+  const deportistaIds = Array.from(
+    new Set([
+      ...(accesos.datos?.content ?? []).map((acceso) => acceso.deportistaId),
+      ...(sesionId ? [sesionId] : []),
+    ]),
+  )
 
   return (
     <>
@@ -49,10 +87,10 @@ export default function AccesosPage() {
         ]}
         actions={
           <>
-            <AppButton variant="secondary" icon="exportar" disabled title="Se habilita con datos reales del contrato de accesos">
+            <AppButton variant="secondary" icon="exportar" disabled title="Exportación no disponible en este prototipo">
               Exportar actividad
             </AppButton>
-            <AppButton icon="mas" onClick={() => setModalAbierto(true)}>
+            <AppButton icon="mas" onClick={() => setModalAbierto(true)} disabled={accesos.estado !== 'listo'}>
               Registrar manilla
             </AppButton>
           </>
@@ -70,9 +108,7 @@ export default function AccesosPage() {
         <section aria-label="Historial de accesos NFC" className="mb-4">
           <h2 className="sg-section-title">
             Actividad de accesos
-            <span className="sg-note--muted ms-2">
-              {accesos.datos.totalElements} registros
-            </span>
+            <span className="sg-note--muted ms-2">{accesos.datos.totalElements} registros</span>
           </h2>
           <DataTable
             caption="Últimos accesos NFC validados por el servidor"
@@ -99,7 +135,7 @@ export default function AccesosPage() {
               <NoContractState
                 illustration="nfc"
                 title="Sin accesos registrados"
-                body="El backend está conectado; los accesos aparecerán aquí en cuanto ocurran."
+                body="Los accesos aparecerán aquí en cuanto una manilla sea validada."
               />
             }
           />
@@ -121,10 +157,10 @@ export default function AccesosPage() {
           <Form.Label className="sg-field-label">Estado</Form.Label>
           <Form.Select value={estado} onChange={(e) => setEstado(e.target.value)}>
             <option value="todos">Todos los estados</option>
-            <option value="borrador">Borrador local</option>
             <option value="activa">Activa</option>
+            <option value="registrada">Registrada</option>
             <option value="bloqueada">Bloqueada</option>
-            <option value="en-reposicion">En reposición</option>
+            <option value="reposicion">En reposición</option>
           </Form.Select>
         </Form.Group>
         <AppButton
@@ -141,20 +177,20 @@ export default function AccesosPage() {
       </FilterBar>
 
       <DataTable
-        caption="Manillas NFC registradas. Los identificadores sensibles nunca se muestran en pantalla."
+        caption="Manillas NFC sincronizadas. Los identificadores sensibles nunca se muestran en pantalla."
         columns={[
           { key: 'deportista', header: 'Deportista' },
           { key: 'identificador', header: 'Identificador público' },
           { key: 'estado', header: 'Estado' },
           { key: 'ultimoAcceso', header: 'Último acceso' },
-          { key: 'acciones', header: 'Acciones', align: 'end' },
+          { key: 'acciones', header: 'Sincronización', align: 'end' },
         ]}
         rows={filas}
         emptyState={
           <NoContractState
             illustration="nfc"
             title="Aún no hay manillas registradas"
-            body="Crea un borrador local mientras el módulo se conecta al backend."
+            body="Registra una manilla para habilitar la validación de accesos en el backend."
             action={
               <AppButton size="sm" icon="mas" onClick={() => setModalAbierto(true)}>
                 Registrar manilla
@@ -170,15 +206,22 @@ export default function AccesosPage() {
           <StatusBadge tone="success" label="Activa" />
           <StatusBadge tone="warning" label="En reposición" icon="reloj" />
           <StatusBadge tone="danger" label="Bloqueada" icon="privacidad" />
-          <StatusBadge tone="neutral" label="Borrador local" icon="reloj" />
+          <StatusBadge tone="neutral" label="Revocada" icon="privacidad" />
         </div>
         <p className="sg-note mt-2">
-          Bloquear o revocar una manilla es una acción irreversible: requerirá confirmación
-          explícita con la consecuencia descrita antes de ejecutarse.
+          Bloquear o revocar una manilla requiere confirmación explícita antes de ejecutarse.
         </p>
       </section>
 
-      <RegistrarManillaModal show={modalAbierto} onHide={() => setModalAbierto(false)} />
+      <RegistrarManillaModal
+        show={modalAbierto}
+        onHide={() => setModalAbierto(false)}
+        deportistaIds={deportistaIds}
+        onSaved={(manilla) => {
+          setRegistradas((actuales) => [manilla, ...actuales])
+          accesos.recargar()
+        }}
+      />
     </>
   )
 }
