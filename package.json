@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "typecheck": "tsc -b --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "contract:verify": "node scripts/verify-openapi-coverage.mjs",
+    "contract:smoke": "node scripts/smoke-openapi.mjs"
   },
   "dependencies": {
     "@fontsource/poppins": "^5.2.7",

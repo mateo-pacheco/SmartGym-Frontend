@@ -286,6 +286,10 @@ export const iotTelemetria = {
   registrar: (body: LecturaTelemetriaRequestDTO) =>
     request<LecturaTelemetriaResponseDTO>('/api/iot/telemetria', { method: 'POST', body }),
 
+  /** Variante v1 con respuesta paginada compatible con las consultas v1. */
+  registrarV1: (body: LecturaTelemetriaRequestDTO) =>
+    request<LecturaTelemetriaResponseDTO>('/api/v1/iot/telemetria', { method: 'POST', body }),
+
   historialPorMaquina: (maquinaId: string) =>
     request<LecturaTelemetriaResponseDTO[]>(`/api/iot/maquinas/${maquinaId}/telemetria`),
 
@@ -328,6 +332,8 @@ export const iotAlertas = {
 // ---------------------------------------------------------------------------
 
 export const iotFatiga = {
+  legadoPorUsuario: (usuarioId: string) =>
+    request<RegistroFatigaResponseDTO>(`/api/iot/usuarios/${usuarioId}/fatiga`),
   calcular: (body: RegistroFatigaRequestDTO) =>
     request<RegistroFatigaResponseDTO>('/api/v1/iot/fatiga/calcular', { method: 'POST', body }),
   ultimo: (usuarioId: string) =>
