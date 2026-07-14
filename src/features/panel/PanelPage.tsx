@@ -36,7 +36,9 @@ export default function PanelPage() {
   const datos = resumen.datos
 
   const [fatiga, setFatiga] = useState<RegistroFatigaResponseDTO | null>(null)
-  const calcularFatiga = useMutation((usuarioId: string) => iotFatiga.calcular({ usuarioId }))
+  const [sinRegistro, setSinRegistro] = useState(false)
+  // Se consulta el último índice de fatiga calculado (lectura estable).
+  const verFatiga = useMutation((usuarioId: string) => iotFatiga.ultimo(usuarioId))
 
   const eventos = [
     ...(datos?.accesos?.content ?? []).slice(0, 4).map((a) => ({
@@ -55,10 +57,12 @@ export default function PanelPage() {
 
   const obtenerFatiga = async () => {
     if (!sesionId) return
+    setSinRegistro(false)
     try {
-      const r = await calcularFatiga.ejecutar(sesionId)
+      const r = await verFatiga.ejecutar(sesionId)
       if (r) setFatiga(r)
-    } catch { /* error en calcularFatiga.error */ }
+      else setSinRegistro(true) // 204: aún no hay un registro calculado
+    } catch { /* error en verFatiga.error */ }
   }
 
   return (
@@ -124,12 +128,14 @@ export default function PanelPage() {
                 </>
               ) : (
                 <p className="sg-note sg-note--muted m-0">
-                  Calcula tu índice de fatiga a partir de tu telemetría reciente registrada en el backend.
+                  {sinRegistro
+                    ? 'Aún no hay un índice de fatiga registrado para tu usuario.'
+                    : 'Consulta tu último índice de fatiga calculado por el backend.'}
                 </p>
               )}
-              {calcularFatiga.error ? <p className="sg-form-note text-danger m-0" role="alert">{calcularFatiga.error}</p> : null}
-              <AppButton size="sm" icon="pulso" onClick={obtenerFatiga} disabled={calcularFatiga.enviando || !sesionId}>
-                {calcularFatiga.enviando ? 'Calculando…' : 'Calcular mi fatiga'}
+              {verFatiga.error ? <p className="sg-form-note text-danger m-0" role="alert">{verFatiga.error}</p> : null}
+              <AppButton size="sm" icon="pulso" onClick={obtenerFatiga} disabled={verFatiga.enviando || !sesionId}>
+                {verFatiga.enviando ? 'Consultando…' : 'Ver mi índice de fatiga'}
               </AppButton>
             </div>
 
