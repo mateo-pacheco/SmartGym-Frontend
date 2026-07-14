@@ -1,14 +1,17 @@
 /* Hook de lectura contra la API SmartGym con estados explícitos.
-   Nunca inventa datos: sin backend configurado o sin sesión, lo declara. */
+   Nunca inventa datos: sin backend configurado o sin sesión, lo declara.
+   Cancela la petición en curso al desmontar o al recargar (AbortController) y
+   nunca actualiza estado después del desmontaje. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getApiConfig } from './client'
 import { ApiError } from './http'
-import { haySesion } from './auth'
+import { useAuth } from './useAuth'
 
 export type EstadoApi =
   | 'sin-backend'
   | 'sin-sesion'
+  | 'sesion-expirada'
   | 'sin-permiso'
   | 'cargando'
   | 'error'
@@ -27,12 +30,12 @@ interface UseApiDataOptions {
 }
 
 export function useApiData<T>(
-  fetcher: () => Promise<T>,
+  fetcher: (signal: AbortSignal) => Promise<T>,
   { requiereSesion = true }: UseApiDataOptions = {},
 ): ApiData<T> {
   const configurado = getApiConfig().status === 'configurado'
-  const conSesion = haySesion()
-  const habilitado = configurado && (!requiereSesion || conSesion)
+  const { autenticado } = useAuth()
+  const habilitado = configurado && (!requiereSesion || autenticado)
 
   const fetcherRef = useRef(fetcher)
   fetcherRef.current = fetcher
@@ -45,35 +48,48 @@ export function useApiData<T>(
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!habilitado) return
+    if (!configurado) {
+      setEstado('sin-backend')
+      return
+    }
+    if (!habilitado) {
+      setEstado('sin-sesion')
+      return
+    }
+
+    const controller = new AbortController()
     let activo = true
     setEstado('cargando')
     setError(null)
     fetcherRef
-      .current()
+      .current(controller.signal)
       .then((resultado) => {
         if (!activo) return
         setDatos(resultado)
         setEstado('listo')
       })
       .catch((causa: unknown) => {
-        if (!activo) return
+        if (!activo || controller.signal.aborted) return
+        if (causa instanceof DOMException && causa.name === 'AbortError') return
         if (causa instanceof ApiError && causa.status === 403) {
           setError(null)
           setEstado('sin-permiso')
           return
         }
-        setError(
-          causa instanceof ApiError
-            ? causa.message
-            : 'No se pudo contactar al backend. Revisa la conexión.',
-        )
+        if (causa instanceof ApiError && causa.status === 401) {
+          // El 401 ya cerró la sesión en http.ts; la guarda redirige.
+          setError(null)
+          setEstado('sesion-expirada')
+          return
+        }
+        setError(causa instanceof ApiError ? causa.userMessage : 'No se pudo contactar al backend.')
         setEstado('error')
       })
     return () => {
       activo = false
+      controller.abort()
     }
-  }, [habilitado, version])
+  }, [configurado, habilitado, version])
 
   const recargar = useCallback(() => setVersion((v) => v + 1), [])
 

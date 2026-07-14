@@ -1,11 +1,22 @@
 /* Sesión contra la API SmartGym.
    El contrato (openapi.yaml) exige `Authorization: Bearer <JWT>` con un token
    emitido por Supabase. El login intercambia correo/contraseña por ese JWT en
-   el endpoint de Supabase Auth y lo valida contra un recurso protegido de la
-   API. Token y credenciales viven solo en memoria; jamás en storage. */
+   Supabase Auth y lo valida contra un recurso protegido de la API.
+
+   El estado de sesión (usuario, roles, vigencia) vive en authStore.ts y es
+   reactivo; aquí solo se orquestan login/logout. La persistencia del token la
+   gobierna http.ts (sessionStorage por defecto; localStorage con «Recordarme»). */
 
 import { getApiConfig } from './client'
-import { ApiError, clearApiToken, getApiSubject, hasApiToken, setApiToken } from './http'
+import {
+  ApiError,
+  clearApiToken,
+  getApiRoles,
+  getApiSubject,
+  hasApiToken,
+  setApiToken,
+} from './http'
+import { authStore, type SnapshotSesion } from './authStore'
 import { accesosNfc } from './endpoints'
 import { runtimeEnv } from './runtimeEnv'
 
@@ -16,23 +27,20 @@ export interface SesionApi {
   id: string
 }
 
-const SESSION_USER_KEY = 'smartgym.api.user'
-
-function readStoredSession(): SesionApi | null {
-  if (typeof window === 'undefined' || !hasApiToken()) return null
-  const usuario = window.sessionStorage.getItem(SESSION_USER_KEY) ?? window.localStorage.getItem(SESSION_USER_KEY)
-  const id = getApiSubject()
-  return usuario && id ? { usuario, id } : null
-}
-
-let sesion: SesionApi | null = readStoredSession()
-
 export function getSesion(): SesionApi | null {
-  return sesion
+  const s = authStore.getSnapshot()
+  return s.estado === 'autenticada' && s.usuario && s.id
+    ? { usuario: s.usuario, id: s.id }
+    : null
 }
 
 export function haySesion(): boolean {
-  return sesion !== null && hasApiToken()
+  return authStore.getSnapshot().estado === 'autenticada' && hasApiToken()
+}
+
+/** Roles de aplicación de la sesión activa (vacío si no hay sesión). */
+export function getRolesSesion(): string[] {
+  return authStore.getSnapshot().roles
 }
 
 interface SupabaseConfig {
@@ -104,24 +112,22 @@ export async function iniciarSesion(
   }
 
   setApiToken(resultado.token, recordar, resultado.refreshToken, resultado.expiresIn)
-  try {
-    await accesosNfc.consultar({ size: 1 })
+  const finalizar = () => {
     const id = getApiSubject()
     if (!id) throw new ApiError(401, { message: 'El token no contiene un identificador de usuario.' })
-    sesion = { usuario, id }
-    window.sessionStorage.setItem(SESSION_USER_KEY, usuario)
-    if (recordar) window.localStorage.setItem(SESSION_USER_KEY, usuario)
-    return 'ok'
+    authStore.guardarUsuario(usuario, recordar)
+    return 'ok' as const
+  }
+  try {
+    await accesosNfc.consultar({ size: 1 })
+    return finalizar()
   } catch (error) {
+    // 403 = sesión válida sin permiso sobre el recurso de sondeo (rol acotado).
     if (error instanceof ApiError && error.status === 403) {
-      const id = getApiSubject()
-      if (!id) throw new ApiError(401, { message: 'El token no contiene un identificador de usuario.' })
-      sesion = { usuario, id }
-      window.sessionStorage.setItem(SESSION_USER_KEY, usuario)
-      if (recordar) window.localStorage.setItem(SESSION_USER_KEY, usuario)
-      return 'ok'
+      return finalizar()
     }
     clearApiToken()
+    authStore.limpiarUsuario()
     if (error instanceof ApiError && error.status === 401) {
       return 'credenciales'
     }
@@ -130,10 +136,13 @@ export async function iniciarSesion(
 }
 
 export function cerrarSesion(): void {
-  sesion = null
   clearApiToken()
-  if (typeof window !== 'undefined') {
-    window.sessionStorage.removeItem(SESSION_USER_KEY)
-    window.localStorage.removeItem(SESSION_USER_KEY)
-  }
+  authStore.limpiarUsuario()
 }
+
+/** Re-exporta el snapshot para consumidores que no usan el hook. */
+export function snapshotSesion(): SnapshotSesion {
+  return authStore.getSnapshot()
+}
+
+export { getApiRoles }

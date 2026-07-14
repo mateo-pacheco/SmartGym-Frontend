@@ -109,6 +109,24 @@ const paths: Record<string, ReactNode> = {
   ),
   filtro: <path d="M3.5 5.5h17l-6.5 7.5v5.5l-4-2v-3.5Z" />,
   exportar: <path d="M12 15V3.5M7 8.5 12 3.5l5 5M5 20.5h14" />,
+  salir: (
+    <>
+      <path d="M14 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H14" />
+      <path d="M17 8.5 20.5 12 17 15.5M9.5 12h11" />
+    </>
+  ),
+  editar: (
+    <>
+      <path d="M4 20h4L18.5 9.5a2 2 0 0 0-2.8-2.8L5 17.5Z" />
+      <path d="M14 7.5l2.8 2.8" />
+    </>
+  ),
+  basura: (
+    <>
+      <path d="M4.5 7h15M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2" />
+      <path d="M6.5 7 7.4 19a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4L17.5 7" />
+    </>
+  ),
 }
 
 export type IconName = keyof typeof paths

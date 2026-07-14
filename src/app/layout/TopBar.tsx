@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { AppButton } from '../../components/actions/AppButton'
 import { ThemeToggle } from '../../components/navigation/ThemeToggle'
+import { SessionMenu } from './SessionMenu'
 import { findNavItem } from './navigation'
 
 export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
@@ -29,6 +30,7 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           />
         </span>
         <ThemeToggle />
+        <SessionMenu />
       </div>
     </div>
   )

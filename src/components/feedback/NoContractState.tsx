@@ -6,9 +6,9 @@ export interface NoContractStateProps {
   illustration: IllustrationName
   /** Título específico del módulo (p. ej. «Aún no hay accesos registrados»). */
   title: string
-  /** Una sola línea de contexto. El detalle del contrato vive en ModuleGate. */
+  /** Una sola línea de contexto sobre por qué está vacío. */
   body: string
-  /** Acción primaria disponible hoy (p. ej. crear un borrador local). */
+  /** Acción primaria real (p. ej. abrir el formulario de creación). */
   action?: ReactNode
 }
 

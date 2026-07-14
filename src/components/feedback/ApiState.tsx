@@ -7,14 +7,15 @@ import type { EstadoApi } from '../../services/api/useApiData'
 export interface ApiStateProps {
   /** Estado devuelto por useApiData. Con 'listo' no renderiza nada. */
   estado: EstadoApi
-  /** Nombre del contrato que activa el módulo (para el estado sin backend). */
+  /** Nombre legible del recurso consultado (p. ej. «Planes y revisión»). */
   contract: string
   error?: string | null
   onRetry?: () => void
 }
 
-/* Estados de conexión de un módulo, en una sola línea coherente con
-   ModuleGate: sin backend, sin sesión, cargando o error con reintento. */
+/* Estados de conexión de un módulo. Con backend configurado y sesión válida
+   nunca comunica «contrato pendiente»: solo cargando, sin permiso, sesión
+   expirada o error con reintento. El estado vacío real lo maneja la tabla. */
 export function ApiState({ estado, contract, error, onRetry }: ApiStateProps) {
   if (estado === 'listo') return null
 
@@ -28,10 +29,21 @@ export function ApiState({ estado, contract, error, onRetry }: ApiStateProps) {
         <span className="sg-gate__icon" aria-hidden="true">
           <Icon name="privacidad" size={16} />
         </span>
-        <p className="sg-gate__text">
-          Backend conectado — inicia sesión para consultar los datos reales de{' '}
-          <strong>{contract}</strong>.
-        </p>
+        <p className="sg-gate__text">Inicia sesión para ver esta información.</p>
+        <Link className="sg-gate__link" to="/ingresar">
+          Ingresar
+        </Link>
+      </div>
+    )
+  }
+
+  if (estado === 'sesion-expirada') {
+    return (
+      <div className="sg-gate" role="alert">
+        <span className="sg-gate__icon" aria-hidden="true">
+          <Icon name="reloj" size={16} />
+        </span>
+        <p className="sg-gate__text">Tu sesión expiró. Vuelve a ingresar para continuar.</p>
         <Link className="sg-gate__link" to="/ingresar">
           Ingresar
         </Link>
@@ -46,8 +58,8 @@ export function ApiState({ estado, contract, error, onRetry }: ApiStateProps) {
           <Icon name="privacidad" size={16} />
         </span>
         <p className="sg-gate__text">
-          Sesión activa — este perfil no necesita acceso a los datos administrativos de{' '}
-          <strong>{contract}</strong>. Los demás módulos autorizados continúan disponibles.
+          Tu rol no tiene permisos para ver <strong>{contract}</strong>. Los demás módulos
+          autorizados siguen disponibles.
         </p>
       </div>
     )
@@ -59,7 +71,7 @@ export function ApiState({ estado, contract, error, onRetry }: ApiStateProps) {
         <span className="sg-gate__icon" aria-hidden="true">
           <Icon name="reloj" size={16} />
         </span>
-        <p className="sg-gate__text">Consultando datos reales del backend…</p>
+        <p className="sg-gate__text">Cargando datos…</p>
       </div>
     )
   }
