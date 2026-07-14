@@ -755,6 +755,52 @@ p {
   }
 }
 
+/* ---------- Listas simples (sin viñetas) ---------- */
+.sg-plain-list {
+  list-style: none;
+}
+
+/* ---------- Pestañas de sección ---------- */
+.sg-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--sg-border);
+}
+
+.sg-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--sg-text-secondary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition:
+    color var(--sg-motion-fast) var(--sg-ease-product),
+    border-color var(--sg-motion-fast) var(--sg-ease-product);
+}
+
+.sg-tab:hover {
+  color: var(--sg-text-primary);
+}
+
+.sg-tab--activa {
+  color: var(--sg-brand-strong);
+  border-bottom-color: var(--sg-brand);
+}
+
+.sg-tab:focus-visible {
+  outline: 2px solid var(--sg-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 @media (max-width: 575.98px) {
   .sg-pagination {
     justify-content: center;
