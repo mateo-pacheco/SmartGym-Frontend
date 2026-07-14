@@ -7,6 +7,7 @@ import { Icon } from '../../components/icons/Icon'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { useApiData } from '../../services/api/useApiData'
 import { gymApprovals } from '../../services/api/endpoints'
+import { estadoVisual } from '../../lib/estadoVisual'
 
 /* Gobernanza: consentimiento, revocación y privacidad con copy explícito.
    La autorización real siempre vive en el backend. */
@@ -14,15 +15,10 @@ export default function PrivacidadPage() {
   const decisiones = useApiData(() => gymApprovals.listar())
   const filas = (decisiones.datos ?? []).map((a) => ({
     titular: a.deportistaId,
-    ambito: `Tratamiento de datos de salud — ${a.tipoRestriccion}`,
+    ambito: `Tratamiento de datos de salud — ${estadoVisual(a.tipoRestriccion).etiqueta}`,
     otorgado: new Date(a.fechaValidacion).toLocaleDateString('es-EC'),
-    estado: (
-      <StatusBadge
-        tone={a.estado === 'APROBADO' ? 'success' : 'warning'}
-        label={a.estado}
-      />
-    ),
-    accion: a.fechaExpiracion ? `Vence ${a.fechaExpiracion}` : 'Vigencia controlada',
+    estado: <StatusBadge tone={estadoVisual(a.estado).tono} label={estadoVisual(a.estado).etiqueta} />,
+    accion: a.fechaExpiracion ? `Vence ${new Date(a.fechaExpiracion).toLocaleDateString('es-EC')}` : 'Vigencia controlada',
   }))
   return (
     <>

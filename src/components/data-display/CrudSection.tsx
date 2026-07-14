@@ -66,6 +66,7 @@ export function CrudSection<T>({
   const mutEliminar = useMutation((id: string) => eliminar!(id))
 
   const gestionable = puedeGestionar && (!!crear || !!actualizar || !!eliminar)
+  const conAcciones = puedeGestionar && (!!actualizar || !!eliminar)
 
   const abrirCrear = () => {
     setEditando(null)
@@ -110,7 +111,7 @@ export function CrudSection<T>({
   const lista = datos.datos ?? []
   const filas = lista.map((item) => {
     const base = fila(item)
-    if (!gestionable) return base
+    if (!conAcciones) return base
     return {
       ...base,
       __acciones: (
@@ -126,7 +127,7 @@ export function CrudSection<T>({
     }
   })
 
-  const columnasFinal = gestionable
+  const columnasFinal = conAcciones
     ? [...columnas, { key: '__acciones', header: '', align: 'end' as const }]
     : columnas
 

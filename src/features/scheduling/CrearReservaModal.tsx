@@ -6,7 +6,7 @@ import { useToast } from '../../app/providers/useToast'
 import { agendamiento } from '../../services/api/endpoints'
 import { getSesion } from '../../services/api/auth'
 import { ApiError } from '../../services/api/http'
-import type { EspacioZonaResponseDTO, SlotHorarioResponseDTO } from '../../services/api/types'
+import type { EspacioZonaResponseDTO, ReservaResponseDTO, SlotHorarioResponseDTO } from '../../services/api/types'
 
 interface Campos {
   fecha: string
@@ -21,7 +21,7 @@ interface CrearReservaModalProps {
   show: boolean
   onHide: () => void
   espacios: EspacioZonaResponseDTO[]
-  onSaved: () => void
+  onSaved: (reserva: ReservaResponseDTO) => void
 }
 
 export function CrearReservaModal({ show, onHide, espacios, onSaved }: CrearReservaModalProps) {
@@ -98,7 +98,7 @@ export function CrearReservaModal({ show, onHide, espacios, onSaved }: CrearRese
     setGuardando(true)
     setErrorApi(null)
     try {
-      await agendamiento.crearReserva({
+      const reserva = await agendamiento.crearReserva({
         usuarioId: sesion.id,
         slotId: campos.slotId,
         tipo: 'CUPO_GIMNASIO',
@@ -107,13 +107,13 @@ export function CrearReservaModal({ show, onHide, espacios, onSaved }: CrearRese
         title: 'Reserva confirmada',
         body: 'La reserva se guardó en el servidor y el cupo quedó actualizado.',
       })
-      onSaved()
+      onSaved(reserva)
       onHide()
       setCampos(camposIniciales())
       setSlots([])
       setErrores({})
     } catch (error) {
-      setErrorApi(error instanceof ApiError ? error.message : 'No se pudo guardar la reserva.')
+      setErrorApi(error instanceof ApiError ? error.userMessage : 'No se pudo guardar la reserva.')
     } finally {
       setGuardando(false)
     }

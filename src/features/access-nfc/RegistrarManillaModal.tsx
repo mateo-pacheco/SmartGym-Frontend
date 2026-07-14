@@ -88,7 +88,7 @@ export function RegistrarManillaModal({
       onHide()
       reiniciar()
     } catch (error) {
-      setErrorApi(error instanceof ApiError ? error.message : 'No se pudo registrar la manilla.')
+      setErrorApi(error instanceof ApiError ? error.userMessage : 'No se pudo registrar la manilla.')
     } finally {
       setGuardando(false)
     }
