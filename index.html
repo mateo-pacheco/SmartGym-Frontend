@@ -68,23 +68,7 @@
          el contenedor Docker; en dev queda vacía y se usan las variables de
          .env.local. Debe cargar antes del bundle de la app. -->
     <script src="/config.js"></script>
-    <script>
-      // Evita el flash de tema: aplica la preferencia guardada antes del primer paint.
-      (function () {
-        try {
-          var saved = localStorage.getItem('sg-theme');
-          var theme =
-            saved === 'dark' || saved === 'light'
-              ? saved
-              : window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light';
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (e) {
-          /* sin acceso a storage: se mantiene el tema claro */
-        }
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
