@@ -38,8 +38,12 @@ export default function PanelPage() {
 
   const [fatiga, setFatiga] = useState<RegistroFatigaResponseDTO | null>(null)
   const [sinRegistro, setSinRegistro] = useState(false)
-  // Se consulta el último índice de fatiga calculado (lectura estable).
-  const verFatiga = useMutation((usuarioId: string) => iotFatiga.ultimo(usuarioId))
+  /* Calcula el índice a partir de la telemetría del usuario. Si el backend no
+     devuelve cuerpo, se recupera el último registro ya calculado. */
+  const verFatiga = useMutation(async (usuarioId: string) => {
+    const calculado = await iotFatiga.calcular({ usuarioId })
+    return calculado ?? (await iotFatiga.ultimo(usuarioId))
+  })
 
   const eventos = [
     ...(datos?.accesos?.content ?? []).slice(0, 4).map((a) => ({
@@ -131,13 +135,13 @@ export default function PanelPage() {
                 <p className="sg-note sg-note--muted m-0">
                   {sinRegistro
                     ? 'Aún no hay un índice de fatiga registrado para tu usuario.'
-                    : 'Consulta tu último índice de fatiga calculado por el backend.'}
+                    : 'Calcula tu índice de fatiga a partir de tu telemetría reciente registrada en el backend.'}
                 </p>
               )}
               {verFatiga.error ? <p className="sg-form-note text-danger m-0" role="alert">{verFatiga.error}</p> : null}
               <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                 <AppButton size="sm" icon="pulso" onClick={obtenerFatiga} disabled={verFatiga.enviando || !sesionId}>
-                  {verFatiga.enviando ? 'Consultando…' : 'Ver mi índice de fatiga'}
+                  {verFatiga.enviando ? 'Calculando…' : 'Calcular mi fatiga'}
                 </AppButton>
                 <BotonesReporte pdf={iotFatiga.reportePdf} excel={iotFatiga.reporteExcel} />
               </div>
