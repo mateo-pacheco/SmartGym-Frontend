@@ -297,3 +297,66 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   if (!texto) return undefined as T
   return JSON.parse(texto) as T
 }
+
+export interface DescargaOptions {
+  /** Nombre de archivo por defecto si el servidor no envía Content-Disposition. */
+  filename: string
+  query?: Record<string, QueryValue>
+  signal?: AbortSignal
+  accept?: string
+}
+
+/** Nombre de archivo desde la cabecera Content-Disposition, si viene. */
+function nombreDesdeCabecera(cabecera: string | null): string | null {
+  if (!cabecera) return null
+  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(cabecera)
+  if (utf8?.[1]) return decodeURIComponent(utf8[1])
+  const simple = /filename="?([^";]+)"?/i.exec(cabecera)
+  return simple?.[1] ?? null
+}
+
+/**
+ * Descarga un archivo binario autenticado (PDF, Excel, etc.) y dispara la
+ * descarga en el navegador. Reutiliza el token y el mapeo de errores del
+ * transporte JSON, pero maneja el cuerpo como Blob (no como JSON).
+ * Preparado para los reportes que expone el backend (p. ej.
+ * `GET /api/v1/accesos-nfc/reportes/pdf`).
+ */
+export async function descargarArchivo(path: string, options: DescargaOptions): Promise<void> {
+  await ensureFreshToken()
+  const { filename, query, signal, accept = 'application/pdf, application/octet-stream' } = options
+  const headers: Record<string, string> = { Accept: accept }
+  if (bearerToken) headers.Authorization = `Bearer ${bearerToken}`
+
+  let response: Response
+  try {
+    response = await fetch(buildUrl(path, query), { method: 'GET', headers, signal })
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    if (error instanceof DOMException && error.name === 'AbortError') throw error
+    throw new ApiError(0)
+  }
+
+  if (!response.ok) {
+    let errorBody: ErrorResponseDTO | undefined
+    try {
+      errorBody = (await response.json()) as ErrorResponseDTO
+    } catch {
+      /* respuesta sin cuerpo JSON */
+    }
+    if (response.status === 401) clearApiToken()
+    throw new ApiError(response.status, errorBody)
+  }
+
+  const blob = await response.blob()
+  if (typeof window === 'undefined') return
+  const nombre = nombreDesdeCabecera(response.headers.get('Content-Disposition')) ?? filename
+  const url = URL.createObjectURL(blob)
+  const enlace = document.createElement('a')
+  enlace.href = url
+  enlace.download = nombre
+  document.body.appendChild(enlace)
+  enlace.click()
+  enlace.remove()
+  URL.revokeObjectURL(url)
+}

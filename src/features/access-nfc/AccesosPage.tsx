@@ -14,6 +14,7 @@ import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import { useMutation } from '../../services/api/useMutation'
 import { accesosNfc, manillasNfc } from '../../services/api/endpoints'
+import { reportes } from '../../services/api/reportes'
 import { estadoVisual } from '../../lib/estadoVisual'
 import { ESTADO_MANILLA } from '../../lib/opcionesContrato'
 import type { ManillaNfcResponseDTO } from '../../services/api/types'
@@ -21,8 +22,10 @@ import type { ManillaNfcResponseDTO } from '../../services/api/types'
 const fecha = (iso: string) => new Date(iso).toLocaleString('es-EC', { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function AccesosPage() {
-  const { esAdministrador, id: sesionId } = useAuth()
+  const { esAdministrador, tieneRol, id: sesionId } = useAuth()
   const { showToast } = useToast()
+  const puedeReportes = tieneRol('ADMINISTRADOR', 'MEDICO', 'ENTRENADOR')
+  const reportePdf = useMutation(() => reportes.accesosNfcPdf())
 
   const accesos = useApiData(() => accesosNfc.consultar({ size: 50 }))
   const intentos = useApiData(() => accesosNfc.intentosFallidos({ size: 50 }))
@@ -78,11 +81,35 @@ export default function AccesosPage() {
     }
   }
 
+  const descargarReporte = async () => {
+    try {
+      await reportePdf.ejecutar()
+    } catch {
+      /* error reflejado en reportePdf.error */
+    }
+  }
+
   const tabAccesos = (
     <>
       <ApiState estado={accesos.estado} contract="Accesos NFC" error={accesos.error} onRetry={accesos.recargar} />
-      {accesos.datos ? (
-        <p className="sg-note--muted mb-2">{accesos.datos.totalElements} accesos registrados</p>
+      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+        {accesos.datos ? (
+          <p className="sg-note--muted m-0">{accesos.datos.totalElements} accesos registrados</p>
+        ) : <span />}
+        {puedeReportes ? (
+          <AppButton
+            variant="secondary"
+            size="sm"
+            icon="exportar"
+            onClick={descargarReporte}
+            disabled={reportePdf.enviando}
+          >
+            {reportePdf.enviando ? 'Generando…' : 'Descargar reporte PDF'}
+          </AppButton>
+        ) : null}
+      </div>
+      {reportePdf.error ? (
+        <p className="sg-form-note text-danger mb-2" role="alert">{reportePdf.error}</p>
       ) : null}
       <DataTable
         caption="Últimos accesos NFC validados por el servidor"
