@@ -38,9 +38,14 @@ function normalize(operation) {
   return operation.replace(/\{[^}]+\}/g, '{}')
 }
 
+/* Transportes del cliente que representan una operación del contrato:
+   - request(): JSON.
+   - descargarArchivo(): binario (reportes PDF/Excel); siempre GET. */
+const TRANSPORTES = new Set(['request', 'descargarArchivo'])
+
 const clientOperations = []
 function visit(node) {
-  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'request') {
+  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && TRANSPORTES.has(node.expression.text)) {
     const apiPath = templatePath(node.arguments[0])
     let method = 'GET'
     const options = node.arguments[1]

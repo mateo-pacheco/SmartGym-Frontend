@@ -3,6 +3,7 @@ import { DataTable, type DataTableColumn } from './DataTable'
 import { NoContractState } from '../feedback/NoContractState'
 import { ApiState } from '../feedback/ApiState'
 import { AppButton } from '../actions/AppButton'
+import { BotonesReporte } from '../actions/BotonesReporte'
 import { FormModal, type CampoDef, type ValoresForm } from '../forms/FormModal'
 import { ConfirmDialog } from '../feedback/ConfirmDialog'
 import type { IllustrationName } from '../illustrations/EmptyIllustration'
@@ -33,6 +34,13 @@ export interface CrudSectionProps<T> {
   emptyBody: string
   /** Elemento extra a la derecha del encabezado (filtros, etc.). */
   extraHeader?: ReactNode
+  /** Exportación del módulo (endpoints /reportes/pdf y /reportes/excel). */
+  reporte?: {
+    pdf: () => Promise<void>
+    excel: () => Promise<void>
+    /** Gate de rol para exportar; por defecto, quien puede ver puede exportar. */
+    permitido?: boolean
+  }
   pageSize?: number
 }
 
@@ -54,6 +62,7 @@ export function CrudSection<T>({
   emptyTitle,
   emptyBody,
   extraHeader,
+  reporte,
   pageSize,
 }: CrudSectionProps<T>) {
   const { showToast } = useToast()
@@ -135,8 +144,16 @@ export function CrudSection<T>({
     <section className="mb-2">
       <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
         <h2 className="sg-section-title m-0">{titulo}</h2>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
           {extraHeader}
+          {reporte ? (
+            <BotonesReporte
+              pdf={reporte.pdf}
+              excel={reporte.excel}
+              permitido={reporte.permitido ?? true}
+              disabled={datos.estado !== 'listo'}
+            />
+          ) : null}
           {gestionable && crear ? (
             <AppButton size="sm" icon="mas" onClick={abrirCrear} disabled={datos.estado !== 'listo'}>
               {etiquetaCrear ?? `Nuevo ${entidad.toLowerCase()}`}

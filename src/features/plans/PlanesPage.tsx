@@ -95,6 +95,7 @@ export default function PlanesPage() {
         crear={(v) => planesNutricionales.crear({ nombre: v.nombre, objetivo: v.objetivo, fechaInicio: v.fechaInicio, fechaFin: v.fechaFin, caloriasObjetivo: num(v.caloriasObjetivo) })}
         actualizar={(id, v) => planesNutricionales.actualizar(id, { id, nombre: v.nombre, objetivo: v.objetivo, fechaInicio: v.fechaInicio, fechaFin: v.fechaFin, caloriasObjetivo: num(v.caloriasObjetivo) })}
         eliminar={(id) => planesNutricionales.eliminar(id)}
+        reporte={{ pdf: planesNutricionales.reportePdf, excel: planesNutricionales.reporteExcel }}
       />
 
       <CrudSection<AlimentoDTO>
@@ -137,6 +138,7 @@ export default function PlanesPage() {
         crear={(v) => alimentos.crear({ nombre: v.nombre, categoria: v.categoria, calorias: num(v.calorias), proteinas: num(v.proteinas), carbohidratos: num(v.carbohidratos), grasas: num(v.grasas), porcion: num(v.porcion) })}
         actualizar={(id, v) => alimentos.actualizar(id, { id, nombre: v.nombre, categoria: v.categoria, calorias: num(v.calorias), proteinas: num(v.proteinas), carbohidratos: num(v.carbohidratos), grasas: num(v.grasas), porcion: num(v.porcion) })}
         eliminar={(id) => alimentos.eliminar(id)}
+        reporte={{ pdf: alimentos.reportePdf, excel: alimentos.reporteExcel }}
       />
 
       <CrudSection<DetallePlanDTO>
@@ -172,6 +174,7 @@ export default function PlanesPage() {
         crear={(v) => detallesPlan.crear({ tipoComida: v.tipoComida, cantidad: num(v.cantidad), observacion: v.observacion || undefined, planNutricionalId: v.planNutricionalId, alimentoId: v.alimentoId })}
         actualizar={(id, v) => detallesPlan.actualizar(id, { id, tipoComida: v.tipoComida, cantidad: num(v.cantidad), observacion: v.observacion || undefined, planNutricionalId: v.planNutricionalId, alimentoId: v.alimentoId })}
         eliminar={(id) => detallesPlan.eliminar(id)}
+        reporte={{ pdf: detallesPlan.reportePdf, excel: detallesPlan.reporteExcel }}
       />
     </div>
   )
@@ -212,6 +215,7 @@ export default function PlanesPage() {
         crear={(v) => aiPlanes.crear(planEntrenoBody(v))}
         actualizar={(id, v) => aiPlanes.actualizar(id, planEntrenoBody(v))}
         eliminar={(id) => aiPlanes.eliminar(id)}
+        reporte={{ pdf: aiPlanes.reportePdf, excel: aiPlanes.reporteExcel }}
       />
 
       <CrudSection<EjercicioResponse>
@@ -249,6 +253,7 @@ export default function PlanesPage() {
         crear={(v) => aiEjercicios.crear({ nombreEjercicio: v.nombreEjercicio, grupoMuscular: v.grupoMuscular as CreateEjercicioRequest['grupoMuscular'], categoriaEjercicio: v.categoria as CreateEjercicioRequest['categoriaEjercicio'], dificultadEjercicio: v.dificultad as CreateEjercicioRequest['dificultadEjercicio'], tipoEjercicio: v.tipoEjercicio as CreateEjercicioRequest['tipoEjercicio'], descripcionEjercicio: v.descripcionEjercicio || undefined, equipamiento: v.equipamiento || undefined })}
         actualizar={(id, v) => aiEjercicios.actualizar(id, { nombreEjercicio: v.nombreEjercicio, grupoMuscular: v.grupoMuscular as CreateEjercicioRequest['grupoMuscular'], categoria: v.categoria as CreateEjercicioRequest['categoriaEjercicio'], dificultad: v.dificultad as CreateEjercicioRequest['dificultadEjercicio'], tipoEjercicio: v.tipoEjercicio as CreateEjercicioRequest['tipoEjercicio'], descripcionEjercicio: v.descripcionEjercicio || undefined, equipamiento: v.equipamiento || undefined })}
         eliminar={(id) => aiEjercicios.eliminar(id)}
+        reporte={{ pdf: aiEjercicios.reportePdf, excel: aiEjercicios.reporteExcel }}
       />
 
       <CrudSection<PlantillaRutinaResponse>
@@ -285,6 +290,7 @@ export default function PlanesPage() {
         crear={(v) => aiPlantillas.crear(plantillaBody(v))}
         actualizar={(id, v) => aiPlantillas.actualizar(id, plantillaBody(v))}
         eliminar={(id) => aiPlantillas.eliminar(id)}
+        reporte={{ pdf: aiPlantillas.reportePdf, excel: aiPlantillas.reporteExcel }}
       />
     </div>
   )
@@ -314,6 +320,7 @@ export default function PlanesPage() {
         expira: a.fechaExpiracion ? new Date(a.fechaExpiracion).toLocaleDateString('es-EC') : 'Sin expiración',
       })}
       campos={[]}
+      reporte={{ pdf: gymApprovals.reportePdf, excel: gymApprovals.reporteExcel }}
     />
   )
 

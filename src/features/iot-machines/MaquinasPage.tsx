@@ -14,6 +14,7 @@ import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import { useMutation } from '../../services/api/useMutation'
 import { iotAlertas, iotMaquinas } from '../../services/api/endpoints'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { estadoVisual, estaConectado } from '../../lib/estadoVisual'
 import { CONEXION, CALIBRACION, TIPO_ALERTA_MANT } from '../../lib/opcionesContrato'
 import type {
@@ -135,7 +136,14 @@ export default function MaquinasPage() {
 
       <div className="row g-4">
         <div className="col-lg-8">
-          <h2 className="sg-section-title">Inventario conectado</h2>
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+            <h2 className="sg-section-title m-0">Inventario conectado</h2>
+            <BotonesReporte
+              pdf={iotMaquinas.reportePdf}
+              excel={iotMaquinas.reporteExcel}
+              disabled={maquinas.estado !== 'listo'}
+            />
+          </div>
           <DataTable
             caption="Inventario de máquinas con su estado de telemetría"
             columns={[
@@ -158,8 +166,9 @@ export default function MaquinasPage() {
         </div>
         <div className="col-lg-4">
           <MotionEffect fade slide={{ direction: 'right', offset: 18 }} delay={0.18}>
-            <div className="d-flex align-items-center justify-content-between gap-2">
+            <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
               <h2 className="sg-section-title m-0">Alertas de mantenimiento</h2>
+              <BotonesReporte pdf={iotAlertas.reportePdf} excel={iotAlertas.reporteExcel} />
               {esAdministrador ? (
                 <AppButton variant="tertiary" size="sm" icon="mas" onClick={() => setFormAlerta(true)} disabled={maquinas.estado !== 'listo'}>
                   Registrar

@@ -58,6 +58,7 @@ export default function DeportistasPage() {
       crear={(v) => clinicalEvaluations.crear(evalBody(v))}
       actualizar={(id, v) => clinicalEvaluations.actualizar(id, evalBody(v))}
       eliminar={(id) => clinicalEvaluations.eliminar(id)}
+      reporte={{ pdf: clinicalEvaluations.reportePdf, excel: clinicalEvaluations.reporteExcel }}
     />
   )
 
@@ -98,6 +99,7 @@ export default function DeportistasPage() {
       crear={(v) => medicalRestrictions.crear(restriccionBody(v))}
       actualizar={(id, v) => medicalRestrictions.actualizar(id, restriccionBody(v))}
       eliminar={(id) => medicalRestrictions.eliminar(id)}
+      reporte={{ pdf: medicalRestrictions.reportePdf, excel: medicalRestrictions.reporteExcel }}
     />
   )
 

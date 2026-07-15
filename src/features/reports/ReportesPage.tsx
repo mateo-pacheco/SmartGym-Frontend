@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { PageHeader } from '../../components/navigation/PageHeader'
 import { ApiState } from '../../components/feedback/ApiState'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { Icon, type IconName } from '../../components/icons/Icon'
 import { useApiData } from '../../services/api/useApiData'
 import { managementAnalytics } from '../../services/api/endpoints'
@@ -57,12 +59,16 @@ const CATALOGO: ReporteCatalogo[] = [
 /* Reportes: catálogo visible, datos restringidos. El acceso real se verifica
    por rol contra el backend; el frontend nunca decide permisos. */
 export default function ReportesPage() {
-  const dashboard = useApiData(() => {
-    const hasta = new Date()
-    const desde = new Date(hasta)
-    desde.setDate(desde.getDate() - 30)
-    return managementAnalytics.dashboard(aFecha(desde), aFecha(hasta))
-  })
+  /* Rango consultado: últimos 30 días. Se calcula una vez para que la lectura
+     del dashboard y su exportación usen exactamente el mismo período. */
+  const [desde, hasta] = useMemo(() => {
+    const fin = new Date()
+    const inicio = new Date(fin)
+    inicio.setDate(inicio.getDate() - 30)
+    return [aFecha(inicio), aFecha(fin)]
+  }, [])
+
+  const dashboard = useApiData(() => managementAnalytics.dashboard(desde, hasta))
 
   const kpis = dashboard.datos
 
@@ -87,12 +93,18 @@ export default function ReportesPage() {
 
       {dashboard.estado === 'listo' && kpis ? (
         <section aria-label="Indicadores de los últimos 30 días" className="mb-4">
-          <h2 className="sg-section-title">
-            Indicadores del período
-            <span className="sg-note--muted ms-2">
-              {kpis.startDate} → {kpis.endDate}
-            </span>
-          </h2>
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+            <h2 className="sg-section-title m-0">
+              Indicadores del período
+              <span className="sg-note--muted ms-2">
+                {kpis.startDate} → {kpis.endDate}
+              </span>
+            </h2>
+            <BotonesReporte
+              pdf={() => managementAnalytics.reportePdf(desde, hasta)}
+              excel={() => managementAnalytics.reporteExcel(desde, hasta)}
+            />
+          </div>
           <div className="row g-3">
             <div className="col-md-6">
               <div className="sg-surface--inset p-3 h-100">

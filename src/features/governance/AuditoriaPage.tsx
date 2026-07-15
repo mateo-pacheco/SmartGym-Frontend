@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Form from 'react-bootstrap/Form'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { PageHeader } from '../../components/navigation/PageHeader'
 import { FilterBar } from '../../components/data-display/FilterBar'
 import { DataTable } from '../../components/data-display/DataTable'
@@ -61,6 +62,14 @@ export default function AuditoriaPage() {
           </Form.Select>
         </Form.Group>
       </FilterBar>
+
+      <div className="d-flex justify-content-end mb-2">
+        <BotonesReporte
+          pdf={accesosNfc.reporteAuditoriasPdf}
+          excel={accesosNfc.reporteAuditoriasExcel}
+          disabled={auditorias.estado !== 'listo'}
+        />
+      </div>
 
       <DataTable
         caption="Eventos de auditoría en orden cronológico descendente"

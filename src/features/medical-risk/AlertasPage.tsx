@@ -82,6 +82,7 @@ export default function AlertasPage() {
             crear={(v) => riskAlerts.crear(alertaBody(v))}
             actualizar={(id, v) => riskAlerts.actualizar(id, alertaBody(v))}
             eliminar={(id) => riskAlerts.eliminar(id)}
+            reporte={{ pdf: riskAlerts.reportePdf, excel: riskAlerts.reporteExcel }}
           />
         </div>
         <div className="col-lg-4">

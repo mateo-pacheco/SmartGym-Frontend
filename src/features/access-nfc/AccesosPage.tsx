@@ -6,6 +6,7 @@ import { NoContractState } from '../../components/feedback/NoContractState'
 import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { SearchField } from '../../components/forms/SearchField'
 import { FormModal, type ValoresForm } from '../../components/forms/FormModal'
 import { RegistrarManillaModal } from './RegistrarManillaModal'
@@ -14,7 +15,7 @@ import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import { useMutation } from '../../services/api/useMutation'
 import { accesosNfc, manillasNfc } from '../../services/api/endpoints'
-import { reportes } from '../../services/api/reportes'
+
 import { estadoVisual } from '../../lib/estadoVisual'
 import { ESTADO_MANILLA } from '../../lib/opcionesContrato'
 import type { ManillaNfcResponseDTO } from '../../services/api/types'
@@ -25,7 +26,6 @@ export default function AccesosPage() {
   const { esAdministrador, tieneRol, id: sesionId } = useAuth()
   const { showToast } = useToast()
   const puedeReportes = tieneRol('ADMINISTRADOR', 'MEDICO', 'ENTRENADOR')
-  const reportePdf = useMutation(() => reportes.accesosNfcPdf())
 
   const accesos = useApiData(() => accesosNfc.consultar({ size: 50 }))
   const intentos = useApiData(() => accesosNfc.intentosFallidos({ size: 50 }))
@@ -81,14 +81,6 @@ export default function AccesosPage() {
     }
   }
 
-  const descargarReporte = async () => {
-    try {
-      await reportePdf.ejecutar()
-    } catch {
-      /* error reflejado en reportePdf.error */
-    }
-  }
-
   const tabAccesos = (
     <>
       <ApiState estado={accesos.estado} contract="Accesos NFC" error={accesos.error} onRetry={accesos.recargar} />
@@ -96,21 +88,12 @@ export default function AccesosPage() {
         {accesos.datos ? (
           <p className="sg-note--muted m-0">{accesos.datos.totalElements} accesos registrados</p>
         ) : <span />}
-        {puedeReportes ? (
-          <AppButton
-            variant="secondary"
-            size="sm"
-            icon="exportar"
-            onClick={descargarReporte}
-            disabled={reportePdf.enviando}
-          >
-            {reportePdf.enviando ? 'Generando…' : 'Descargar reporte PDF'}
-          </AppButton>
-        ) : null}
+        <BotonesReporte
+          pdf={accesosNfc.reporteAccesosPdf}
+          excel={accesosNfc.reporteAccesosExcel}
+          permitido={puedeReportes}
+        />
       </div>
-      {reportePdf.error ? (
-        <p className="sg-form-note text-danger mb-2" role="alert">{reportePdf.error}</p>
-      ) : null}
       <DataTable
         caption="Últimos accesos NFC validados por el servidor"
         columns={[
@@ -154,6 +137,11 @@ export default function AccesosPage() {
           {esAdministrador ? (
             <AppButton icon="mas" onClick={() => setRegistrar(true)}>Registrar manilla</AppButton>
           ) : null}
+          <BotonesReporte
+            pdf={manillasNfc.reportePdf}
+            excel={manillasNfc.reporteExcel}
+            permitido={puedeReportes}
+          />
         </div>
       </div>
       {historial.error ? <p className="sg-form-note text-danger m-0" role="alert">{historial.error}</p> : null}
@@ -185,6 +173,13 @@ export default function AccesosPage() {
   const tabIntentos = (
     <>
       <ApiState estado={intentos.estado} contract="Intentos fallidos de acceso" error={intentos.error} onRetry={intentos.recargar} />
+      <div className="d-flex justify-content-end mb-2">
+        <BotonesReporte
+          pdf={accesosNfc.reporteIntentosFallidosPdf}
+          excel={accesosNfc.reporteIntentosFallidosExcel}
+          permitido={puedeReportes}
+        />
+      </div>
       <DataTable
         caption="Intentos de acceso fallidos con su motivo"
         columns={[
@@ -207,6 +202,13 @@ export default function AccesosPage() {
   const tabAuditorias = (
     <>
       <ApiState estado={auditorias.estado} contract="Auditoría de manillas" error={auditorias.error} onRetry={auditorias.recargar} />
+      <div className="d-flex justify-content-end mb-2">
+        <BotonesReporte
+          pdf={accesosNfc.reporteAuditoriasPdf}
+          excel={accesosNfc.reporteAuditoriasExcel}
+          permitido={puedeReportes}
+        />
+      </div>
       <DataTable
         caption="Auditoría de acciones sobre manillas"
         columns={[

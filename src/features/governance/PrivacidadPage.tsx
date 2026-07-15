@@ -1,3 +1,4 @@
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
@@ -36,7 +37,14 @@ export default function PrivacidadPage() {
 
       <div className="row g-4">
         <div className="col-lg-8">
-          <h2 className="sg-section-title">Consentimientos registrados</h2>
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+            <h2 className="sg-section-title m-0">Consentimientos registrados</h2>
+            <BotonesReporte
+              pdf={gymApprovals.reportePdf}
+              excel={gymApprovals.reporteExcel}
+              disabled={decisiones.estado !== 'listo'}
+            />
+          </div>
           <DataTable
             caption="Consentimientos registrados y su estado vigente"
             columns={[

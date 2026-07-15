@@ -7,6 +7,7 @@ import { NoContractState } from '../../components/feedback/NoContractState'
 import { ApiState } from '../../components/feedback/ApiState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import { useMutation } from '../../services/api/useMutation'
@@ -134,9 +135,12 @@ export default function PanelPage() {
                 </p>
               )}
               {verFatiga.error ? <p className="sg-form-note text-danger m-0" role="alert">{verFatiga.error}</p> : null}
-              <AppButton size="sm" icon="pulso" onClick={obtenerFatiga} disabled={verFatiga.enviando || !sesionId}>
-                {verFatiga.enviando ? 'Consultando…' : 'Ver mi índice de fatiga'}
-              </AppButton>
+              <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                <AppButton size="sm" icon="pulso" onClick={obtenerFatiga} disabled={verFatiga.enviando || !sesionId}>
+                  {verFatiga.enviando ? 'Consultando…' : 'Ver mi índice de fatiga'}
+                </AppButton>
+                <BotonesReporte pdf={iotFatiga.reportePdf} excel={iotFatiga.reporteExcel} />
+              </div>
             </div>
 
             <h2 className="sg-section-title mt-4">Accesos directos</h2>

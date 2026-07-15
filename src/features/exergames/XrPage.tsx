@@ -6,6 +6,7 @@ import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { AppButton } from '../../components/actions/AppButton'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { SearchField } from '../../components/forms/SearchField'
 import { FormModal, type ValoresForm } from '../../components/forms/FormModal'
 import { useToast } from '../../app/providers/useToast'
@@ -58,6 +59,7 @@ export default function XrPage() {
         { key: 'estadoConexion', label: 'Conexión', tipo: 'select', requerido: true, opciones: CONEXION, ancho: 'half' },
       ]}
       crear={(v) => exergames.crearEstacion({ nombre: v.nombre, tipoJuego: v.tipoJuego as EstacionXrRequestDTO['tipoJuego'], estadoConexion: v.estadoConexion as EstacionXrRequestDTO['estadoConexion'] })}
+      reporte={{ pdf: exergames.reporteEstacionesPdf, excel: exergames.reporteEstacionesExcel }}
     />
   )
 
@@ -127,6 +129,7 @@ function DesafiosSeccion({ datos, puedeGestionar, sesionId }: { datos: ReturnTyp
           { key: 'criterioPuntaje', label: 'Criterio de puntaje', tipo: 'text' },
         ]}
         crear={(v) => exergames.crearDesafio({ nombre: v.nombre, tipo: v.tipo as DesafioRequestDTO['tipo'], fechaInicio: v.fechaInicio, fechaFin: v.fechaFin, criterioPuntaje: v.criterioPuntaje || undefined })}
+        reporte={{ pdf: exergames.reporteDesafiosPdf, excel: exergames.reporteDesafiosExcel }}
       />
 
       {desafioId ? (
@@ -221,6 +224,7 @@ function SesionesSeccion({ sesionId, estaciones, puedeRegistrar }: { sesionId: s
           {puedeRegistrar ? (
             <AppButton icon="mas" onClick={() => setFormAbierto(true)}>Registrar sesión</AppButton>
           ) : null}
+          <BotonesReporte pdf={exergames.reporteSesionesPdf} excel={exergames.reporteSesionesExcel} />
         </div>
       </div>
       {consultar.error ? <p className="sg-form-note text-danger m-0" role="alert">{consultar.error}</p> : null}
@@ -287,6 +291,7 @@ function ProtocolosSeccion({ sesionId }: { sesionId: string | null }) {
         <AppButton variant="secondary" onClick={() => cargar(usuario)} disabled={consultar.enviando || !usuario.trim()}>
           {consultar.enviando ? 'Consultando…' : 'Consultar protocolos'}
         </AppButton>
+        <BotonesReporte pdf={exergames.reporteProtocolosPdf} excel={exergames.reporteProtocolosExcel} />
       </div>
       {consultar.error ? <p className="sg-form-note text-danger m-0" role="alert">{consultar.error}</p> : null}
       <ul className="sg-plain-list d-grid gap-2 m-0 p-0">

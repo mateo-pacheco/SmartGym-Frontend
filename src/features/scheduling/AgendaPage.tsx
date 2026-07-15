@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { DataTable } from '../../components/data-display/DataTable'
@@ -66,7 +67,13 @@ export default function AgendaPage() {
 
       {misReservas.length > 0 ? (
         <section aria-label="Mis reservas" className="mb-4">
-          <h2 className="sg-section-title">Mis reservas de esta sesión</h2>
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+            <h2 className="sg-section-title m-0">Mis reservas de esta sesión</h2>
+            <BotonesReporte
+              pdf={agendamiento.reporteReservasPdf}
+              excel={agendamiento.reporteReservasExcel}
+            />
+          </div>
           <DataTable
             caption="Reservas creadas en esta sesión, con opción de cancelar"
             columns={[
@@ -88,7 +95,14 @@ export default function AgendaPage() {
 
       <div className="row g-4">
         <div className="col-lg-8">
-          <h2 className="sg-section-title">Zonas habilitadas para reserva</h2>
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+            <h2 className="sg-section-title m-0">Zonas habilitadas para reserva</h2>
+            <BotonesReporte
+              pdf={agendamiento.reporteEspaciosPdf}
+              excel={agendamiento.reporteEspaciosExcel}
+              disabled={espacios.estado !== 'listo'}
+            />
+          </div>
           <DataTable
             caption="Zonas y capacidades registradas en el servidor"
             columns={[

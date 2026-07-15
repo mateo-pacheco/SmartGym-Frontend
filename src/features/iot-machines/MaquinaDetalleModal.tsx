@@ -7,6 +7,7 @@ import { useToast } from '../../app/providers/useToast'
 import { useAuth } from '../../services/api/useAuth'
 import { useMutation } from '../../services/api/useMutation'
 import { iotAlertas, iotTelemetria } from '../../services/api/endpoints'
+import { BotonesReporte } from '../../components/actions/BotonesReporte'
 import { ApiError } from '../../services/api/http'
 import { estadoVisual } from '../../lib/estadoVisual'
 import type {
@@ -112,7 +113,10 @@ export function MaquinaDetalleModal({ maquina, onHide, onCambio }: Props) {
         {errorCarga ? <p className="sg-form-note text-danger m-0" role="alert">{errorCarga}</p> : null}
 
         <div>
-          <h3 className="sg-field-label">Telemetría reciente</h3>
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <h3 className="sg-field-label m-0">Telemetría reciente</h3>
+            <BotonesReporte pdf={iotTelemetria.reportePdf} excel={iotTelemetria.reporteExcel} />
+          </div>
           <DataTable
             caption={`Últimas lecturas de telemetría de ${maquina?.nombre ?? ''}`}
             pageSize={5}
