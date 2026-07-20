@@ -11,7 +11,7 @@ import { managementAnalytics } from '../../services/api/endpoints'
 const aFecha = (date: Date) => date.toISOString().slice(0, 10)
 
 const porcentaje = (valor?: number) =>
-  valor === undefined || valor === null ? '—' : `${(valor * 100).toFixed(1)} %`
+  valor === undefined || valor === null ? '—' : `${valor.toFixed(1)} %`
 
 const numero = (valor?: number) =>
   valor === undefined || valor === null ? '—' : valor.toLocaleString('es-EC')
