@@ -135,6 +135,55 @@ export async function iniciarSesion(
   }
 }
 
+export type ResultadoAlta =
+  | { ok: true; id: string; correo: string; requiereConfirmacion: boolean }
+  | { ok: false; motivo: string }
+
+/** Alta de un deportista = alta de usuario en Supabase Auth (signup).
+    El backend usa el `sub` (UUID) del usuario como deportistaId/usuarioId, así
+    que el id devuelto es directamente utilizable en los formularios.
+    No toca la sesión activa: usa fetch directo y nunca fija el token. */
+export async function registrarDeportista(correo: string, clave: string): Promise<ResultadoAlta> {
+  const supabase = getSupabaseConfig()
+  if (!supabase) return { ok: false, motivo: 'Backend de identidad no configurado.' }
+
+  let response: Response
+  try {
+    response = await fetch(`${supabase.url}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: supabase.anonKey },
+      body: JSON.stringify({ email: correo.trim(), password: clave }),
+    })
+  } catch {
+    return { ok: false, motivo: 'No hay conexión con el servicio de identidad.' }
+  }
+
+  const data = (await response.json().catch(() => ({}))) as {
+    id?: string
+    user?: { id?: string; confirmed_at?: string | null }
+    confirmed_at?: string | null
+    access_token?: string
+    msg?: string
+    error_description?: string
+    error?: string
+  }
+
+  if (!response.ok) {
+    const msg = data.msg || data.error_description || data.error || ''
+    if (/registered|already/i.test(msg)) return { ok: false, motivo: 'Ese correo ya tiene una cuenta.' }
+    if (/password/i.test(msg)) return { ok: false, motivo: 'La contraseña es muy débil (mínimo 6 caracteres).' }
+    if (/disabled|not allowed/i.test(msg)) return { ok: false, motivo: 'El registro está deshabilitado en Supabase.' }
+    return { ok: false, motivo: msg || `No se pudo crear el deportista (${response.status}).` }
+  }
+
+  const id = data.user?.id ?? data.id
+  if (!id) return { ok: false, motivo: 'Supabase no devolvió el identificador del nuevo usuario.' }
+
+  // Sin sesión inmediata (sin access_token) suele implicar confirmación por correo.
+  const requiereConfirmacion = !data.access_token && !(data.user?.confirmed_at ?? data.confirmed_at)
+  return { ok: true, id, correo: correo.trim(), requiereConfirmacion }
+}
+
 export function cerrarSesion(): void {
   clearApiToken()
   authStore.limpiarUsuario()

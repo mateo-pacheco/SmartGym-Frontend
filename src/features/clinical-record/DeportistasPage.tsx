@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { PageHeader } from '../../components/navigation/PageHeader'
+import { AppButton } from '../../components/actions/AppButton'
 import { Tabs } from '../../components/navigation/Tabs'
+import { AltaDeportistaModal } from './AltaDeportistaModal'
 import { CrudSection } from '../../components/data-display/CrudSection'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
 import { useApiData } from '../../services/api/useApiData'
@@ -23,6 +26,7 @@ const aIsoFecha = (v: string) => (v ? new Date(v).toISOString() : undefined)
    con datos reales del backend. Solo roles autorizados pueden gestionar. */
 export default function DeportistasPage() {
   const { esAdministrador, id: sesionId } = useAuth()
+  const [altaAbierta, setAltaAbierta] = useState(false)
   const evaluaciones = useApiData(() => clinicalEvaluations.listar())
   const restricciones = useApiData(() => medicalRestrictions.listar())
 
@@ -114,7 +118,15 @@ export default function DeportistasPage() {
           { label: 'Atención deportiva' },
           { label: 'Deportistas' },
         ]}
+        actions={
+          esAdministrador ? (
+            <AppButton icon="mas" onClick={() => setAltaAbierta(true)}>
+              Nuevo deportista
+            </AppButton>
+          ) : undefined
+        }
       />
+      <AltaDeportistaModal show={altaAbierta} onHide={() => setAltaAbierta(false)} />
       <Tabs
         tabs={[
           { id: 'evaluaciones', label: 'Evaluaciones', content: evaluacionesTab },
