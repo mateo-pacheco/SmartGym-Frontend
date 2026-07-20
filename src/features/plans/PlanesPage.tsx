@@ -41,7 +41,8 @@ const num = (s: string) => Number(s)
 const SI_NO = [{ value: 'true', label: 'Sí' }, { value: 'false', label: 'No' }]
 
 export default function PlanesPage() {
-  const { esAdministrador } = useAuth()
+  const { id: sesionId, esAdministrador, tieneRol } = useAuth()
+  const esEstudiante = tieneRol('ESTUDIANTE')
 
   // --- Nutrición ---
   const planes = useApiData(() => planesNutricionales.listar())
@@ -51,10 +52,12 @@ export default function PlanesPage() {
   // --- Prescripción ---
   const ejercicios = useApiData(() => aiEjercicios.listar())
   const plantillas = useApiData(() => aiPlantillas.listar())
-  const planesEntreno = useApiData(() => aiPlanes.listar())
+  const planesEntreno = useApiData(() => aiPlanes.listar(esEstudiante ? sesionId ?? undefined : undefined))
 
   // --- Aprobaciones ---
-  const aprobaciones = useApiData(() => gymApprovals.listar())
+  const aprobaciones = useApiData(() =>
+    esEstudiante && sesionId ? gymApprovals.porDeportista(sesionId) : gymApprovals.listar(),
+  )
 
   const nutricion = (
     <div className="d-grid gap-4">

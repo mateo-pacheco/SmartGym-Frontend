@@ -18,7 +18,9 @@ import type { RegistroFatigaResponseDTO } from '../../services/api/types'
 const hora = (iso: string) => new Date(iso).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })
 
 export default function PanelPage() {
-  const { id: sesionId } = useAuth()
+  const { id: sesionId, tieneRol } = useAuth()
+  const puedeVerAlertas = tieneRol('ADMINISTRADOR', 'MEDICO', 'ENTRENADOR')
+  const puedeVerReportes = tieneRol('ADMINISTRADOR')
 
   const resumen = useApiData(async () => {
     const [accesos, maquinas, alertas, espacios] = await Promise.allSettled([
@@ -150,8 +152,8 @@ export default function PanelPage() {
             <h2 className="sg-section-title mt-4">Accesos directos</h2>
             <div className="sg-surface--inset p-3 d-grid gap-2">
               <AppButton variant="secondary" size="sm" to="/operacion/maquinas" iconEnd="flechaDerecha">Máquinas y telemetría</AppButton>
-              <AppButton variant="secondary" size="sm" to="/atencion/alertas" iconEnd="flechaDerecha">Alertas médicas</AppButton>
-              <AppButton variant="secondary" size="sm" to="/analisis/reportes" iconEnd="flechaDerecha">Reportes de gestión</AppButton>
+              {puedeVerAlertas ? <AppButton variant="secondary" size="sm" to="/atencion/alertas" iconEnd="flechaDerecha">Alertas médicas</AppButton> : null}
+              {puedeVerReportes ? <AppButton variant="secondary" size="sm" to="/analisis/reportes" iconEnd="flechaDerecha">Reportes de gestión</AppButton> : null}
             </div>
           </MotionEffect>
         </div>

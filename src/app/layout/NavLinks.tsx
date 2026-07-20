@@ -2,6 +2,7 @@ import { useId } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion, useReducedMotion } from 'motion/react'
 import { Icon } from '../../components/icons/Icon'
+import { useAuth } from '../../services/api/useAuth'
 import { NAV_GROUPS } from './navigation'
 
 /* Estado activo con pill compartido (patrón MotionHighlight de Animate UI):
@@ -10,10 +11,17 @@ import { NAV_GROUPS } from './navigation'
 export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pillId = useId()
   const reducedMotion = useReducedMotion()
+  const { roles } = useAuth()
+  const groups = NAV_GROUPS
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.roles || item.roles.some((role) => roles.includes(role))),
+    }))
+    .filter((group) => group.items.length > 0)
 
   return (
     <>
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.label ?? 'principal'} className="d-grid gap-1">
           {group.label ? <p className="sg-sidenav__group m-0">{group.label}</p> : null}
           {group.items.map((item) => (

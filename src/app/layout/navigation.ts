@@ -4,6 +4,7 @@ export interface NavItem {
   to: string
   label: string
   icon: IconName
+  roles?: string[]
 }
 
 export interface NavGroup {
@@ -20,7 +21,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Operación',
     items: [
-      { to: '/operacion/accesos', label: 'Acceso NFC', icon: 'nfc' },
+      { to: '/operacion/accesos', label: 'Acceso NFC', icon: 'nfc', roles: ['ADMINISTRADOR', 'MEDICO', 'ENTRENADOR'] },
       { to: '/operacion/maquinas', label: 'Máquinas y telemetría', icon: 'maquina' },
       { to: '/operacion/agenda', label: 'Agenda y aforo', icon: 'agenda' },
     ],
@@ -28,8 +29,8 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Atención deportiva',
     items: [
-      { to: '/atencion/deportistas', label: 'Deportistas', icon: 'deportistas' },
-      { to: '/atencion/alertas', label: 'Alertas médicas', icon: 'alerta' },
+      { to: '/atencion/deportistas', label: 'Deportistas', icon: 'deportistas', roles: ['ADMINISTRADOR', 'MEDICO', 'ENTRENADOR'] },
+      { to: '/atencion/alertas', label: 'Alertas médicas', icon: 'alerta', roles: ['ADMINISTRADOR', 'MEDICO', 'ENTRENADOR'] },
       { to: '/atencion/planes', label: 'Planes y revisiones', icon: 'planes' },
     ],
   },
@@ -39,13 +40,13 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Análisis',
-    items: [{ to: '/analisis/reportes', label: 'Reportes', icon: 'reportes' }],
+    items: [{ to: '/analisis/reportes', label: 'Reportes', icon: 'reportes', roles: ['ADMINISTRADOR'] }],
   },
   {
     label: 'Administración',
     items: [
-      { to: '/administracion/auditoria', label: 'Auditoría', icon: 'auditoria' },
-      { to: '/administracion/privacidad', label: 'Privacidad y consentimientos', icon: 'privacidad' },
+      { to: '/administracion/auditoria', label: 'Auditoría', icon: 'auditoria', roles: ['ADMINISTRADOR'] },
+      { to: '/administracion/privacidad', label: 'Privacidad y consentimientos', icon: 'privacidad', roles: ['ADMINISTRADOR'] },
     ],
   },
 ]
