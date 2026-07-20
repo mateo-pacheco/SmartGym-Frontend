@@ -26,6 +26,8 @@ export interface CampoDef {
   mensajeInvalido?: string
   /** Valor inicial al CREAR (cuando no hay registro en edición). */
   valorPorDefecto?: string
+  /** Sugerencias (datalist) para un campo de texto: elegir o pegar. */
+  sugerencias?: Array<{ value: string; label?: string }>
 }
 
 export type ValoresForm = Record<string, string>
@@ -139,16 +141,29 @@ export function FormModal({
                       isInvalid={!!errores[campo.key]}
                     />
                   ) : (
-                    <Form.Control
-                      type={campo.tipo}
-                      value={valores[campo.key] ?? ''}
-                      placeholder={campo.placeholder}
-                      min={campo.min}
-                      max={campo.max}
-                      step={campo.step}
-                      onChange={(e) => set(campo.key, e.target.value)}
-                      isInvalid={!!errores[campo.key]}
-                    />
+                    <>
+                      <Form.Control
+                        type={campo.tipo}
+                        value={valores[campo.key] ?? ''}
+                        placeholder={campo.placeholder}
+                        min={campo.min}
+                        max={campo.max}
+                        step={campo.step}
+                        list={campo.sugerencias ? `sugerencias-${campo.key}` : undefined}
+                        autoComplete={campo.sugerencias ? 'off' : undefined}
+                        onChange={(e) => set(campo.key, e.target.value)}
+                        isInvalid={!!errores[campo.key]}
+                      />
+                      {campo.sugerencias ? (
+                        <datalist id={`sugerencias-${campo.key}`}>
+                          {campo.sugerencias.map((s) => (
+                            <option key={s.value} value={s.value}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </datalist>
+                      ) : null}
+                    </>
                   )}
                   <Form.Control.Feedback type="invalid">{errores[campo.key]}</Form.Control.Feedback>
                   {campo.ayuda ? <Form.Text className="sg-field-hint">{campo.ayuda}</Form.Text> : null}

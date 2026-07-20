@@ -83,16 +83,11 @@ export function AltaDeportistaModal({ show, onHide }: { show: boolean; onHide: (
             <AppButton icon="copiar" onClick={copiar}>
               Copiar UUID
             </AppButton>
-            {creado.requiereConfirmacion ? (
-              <p className="m-0 sg-form-note text-warning">
-                El correo debe confirmarse antes de que el deportista pueda iniciar sesión. El UUID ya
-                es válido para registrar evaluaciones y manillas.
-              </p>
-            ) : (
-              <p className="m-0 sg-form-note">
-                Ya puedes usar este UUID en el formulario de evaluación o manilla.
-              </p>
-            )}
+            <p className="m-0 sg-form-note text-warning">
+              Esto crea la cuenta de acceso (login). Para usar el UUID en evaluaciones o manillas, el
+              backend debe reconocer al deportista: hoy solo funcionan los deportistas ya existentes.
+              {creado.requiereConfirmacion ? ' El correo además debe confirmarse antes de iniciar sesión.' : ''}
+            </p>
           </>
         ) : (
           <>

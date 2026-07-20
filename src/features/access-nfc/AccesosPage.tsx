@@ -14,7 +14,7 @@ import { useToast } from '../../app/providers/useToast'
 import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import { useMutation } from '../../services/api/useMutation'
-import { accesosNfc, manillasNfc } from '../../services/api/endpoints'
+import { accesosNfc, manillasNfc, clinicalEvaluations } from '../../services/api/endpoints'
 
 import { estadoVisual } from '../../lib/estadoVisual'
 import { ESTADO_MANILLA } from '../../lib/opcionesContrato'
@@ -30,6 +30,8 @@ export default function AccesosPage() {
   const accesos = useApiData(() => accesosNfc.consultar({ size: 50 }))
   const intentos = useApiData(() => accesosNfc.intentosFallidos({ size: 50 }))
   const auditorias = useApiData(() => accesosNfc.auditoriasManillas({ size: 50 }))
+  // Deportistas que existen en el backend (aceptan FK), para sugerir en el alta.
+  const evaluaciones = useApiData(() => clinicalEvaluations.listar())
 
   const [registrar, setRegistrar] = useState(false)
   const [busquedaDep, setBusquedaDep] = useState(sesionId ?? '')
@@ -252,7 +254,13 @@ export default function AccesosPage() {
       <RegistrarManillaModal
         show={registrar}
         onHide={() => setRegistrar(false)}
-        deportistaIds={depConsultado ? [depConsultado] : sesionId ? [sesionId] : []}
+        deportistaIds={Array.from(
+          new Set([
+            ...(depConsultado ? [depConsultado] : []),
+            ...(evaluaciones.datos ?? []).map((e) => e.deportistaId),
+            ...(sesionId ? [sesionId] : []),
+          ]),
+        )}
         onSaved={() => { setRegistrar(false); accesos.recargar(); if (depConsultado) cargarManillas(depConsultado) }}
       />
 
