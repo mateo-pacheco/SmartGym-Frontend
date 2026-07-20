@@ -187,9 +187,8 @@ export default function MaquinasPage() {
                       <span className="ms-2 sg-note">{estadoVisual(a.tipoAlerta).etiqueta}</span>
                     </span>
                     <span className="sg-note--muted">{a.descripcion}</span>
-                    {esAdministrador && a.estado !== 'RESUELTA' && a.estado !== 'CERRADA' ? (
+                    {esAdministrador && a.estado !== 'RESUELTA' ? (
                       <span className="d-flex gap-1">
-                        <AppButton variant="ghost" size="sm" onClick={() => resolver(a, 'EN_PROCESO')} disabled={cambiarEstado.enviando}>En proceso</AppButton>
                         <AppButton variant="ghost" size="sm" onClick={() => resolver(a, 'RESUELTA')} disabled={cambiarEstado.enviando}>Resolver</AppButton>
                       </span>
                     ) : null}

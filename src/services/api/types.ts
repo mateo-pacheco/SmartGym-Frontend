@@ -78,7 +78,7 @@ export type TipoAlertaMantenimiento =
   | 'SEGURIDAD'
   | 'OTRO'
 
-export type EstadoAlertaMantenimiento = 'ABIERTA' | 'EN_PROCESO' | 'RESUELTA' | 'CERRADA'
+export type EstadoAlertaMantenimiento = 'ABIERTA' | 'RESUELTA'
 
 // ---------------------------------------------------------------------------
 // Enums — Exergames

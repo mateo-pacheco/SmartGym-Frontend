@@ -158,11 +158,8 @@ export function MaquinaDetalleModal({ maquina, onHide, onCambio }: Props) {
                     <StatusBadge tone={estadoVisual(a.estado).tono} label={estadoVisual(a.estado).etiqueta} />
                     <span className="ms-2">{estadoVisual(a.tipoAlerta).etiqueta} — {a.descripcion}</span>
                   </span>
-                  {esAdministrador && a.estado !== 'CERRADA' ? (
+                  {esAdministrador && a.estado !== 'RESUELTA' ? (
                     <span className="d-flex gap-1">
-                      {a.estado !== 'EN_PROCESO' ? (
-                        <AppButton variant="ghost" size="sm" onClick={() => alCambiarEstado(a.id, 'EN_PROCESO')} disabled={cambiarEstado.enviando}>En proceso</AppButton>
-                      ) : null}
                       <AppButton variant="ghost" size="sm" onClick={() => alCambiarEstado(a.id, 'RESUELTA')} disabled={cambiarEstado.enviando}>Resolver</AppButton>
                     </span>
                   ) : null}
