@@ -40,11 +40,12 @@ export default function PanelPage() {
 
   const [fatiga, setFatiga] = useState<RegistroFatigaResponseDTO | null>(null)
   const [sinRegistro, setSinRegistro] = useState(false)
-  /* Calcula el índice a partir de la telemetría del usuario. Si el backend no
-     devuelve cuerpo, se recupera el último registro ya calculado. */
+  /* Calcula el índice y lo vuelve a consultar por el usuario autenticado. La
+     lectura posterior mantiene la UI consistente aunque un proxy descarte el
+     cuerpo de la respuesta 201 del cálculo. */
   const verFatiga = useMutation(async (usuarioId: string) => {
-    const calculado = await iotFatiga.calcular({ usuarioId })
-    return calculado ?? (await iotFatiga.ultimo(usuarioId))
+    await iotFatiga.calcular({ usuarioId })
+    return iotFatiga.legadoPorUsuario(usuarioId)
   })
 
   const eventos = [
