@@ -2,6 +2,7 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { Tabs } from '../../components/navigation/Tabs'
 import { CrudSection } from '../../components/data-display/CrudSection'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
+import { UUID_RE, UUID_MSG } from '../../lib/validaciones'
 import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import {
@@ -203,7 +204,7 @@ export default function PlanesPage() {
           estado: <StatusBadge tone={estadoVisual(p.estado).tono} label={estadoVisual(p.estado).etiqueta} />,
         })}
         campos={[
-          { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true },
+          { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true, patron: UUID_RE, mensajeInvalido: UUID_MSG, ayuda: 'Pega el UUID del deportista desde un registro existente.' },
           { key: 'plantillaRutinaId', label: 'Plantilla', tipo: 'select', opciones: (plantillas.datos ?? []).map((t) => ({ value: t.id, label: t.nombrePlantilla })) },
           { key: 'objetivo', label: 'Objetivo', tipo: 'select', requerido: true, opciones: OBJETIVO_PLAN, ancho: 'half' },
           { key: 'estado', label: 'Estado', tipo: 'select', requerido: true, opciones: ESTADO_PLAN_ENTRENAMIENTO, ancho: 'half' },

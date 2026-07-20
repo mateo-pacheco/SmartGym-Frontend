@@ -7,6 +7,7 @@ import { useAuth } from '../../services/api/useAuth'
 import { clinicalEvaluations, medicalRestrictions } from '../../services/api/endpoints'
 import { estadoVisual } from '../../lib/estadoVisual'
 import { RESTRICTION_TYPE } from '../../lib/opcionesContrato'
+import { UUID_RE, UUID_MSG } from '../../lib/validaciones'
 import type {
   ClinicalEvaluationRequest,
   ClinicalEvaluationResponse,
@@ -21,7 +22,7 @@ const aIsoFecha = (v: string) => (v ? new Date(v).toISOString() : undefined)
 /* Expediente clínico: evaluaciones y restricciones médicas del deportista,
    con datos reales del backend. Solo roles autorizados pueden gestionar. */
 export default function DeportistasPage() {
-  const { esAdministrador } = useAuth()
+  const { esAdministrador, id: sesionId } = useAuth()
   const evaluaciones = useApiData(() => clinicalEvaluations.listar())
   const restricciones = useApiData(() => medicalRestrictions.listar())
 
@@ -48,8 +49,8 @@ export default function DeportistasPage() {
         rpe: <StatusBadge tone="info" label={`RPE ${e.rpe ?? '—'}`} icon="pulso" />,
       })}
       campos={[
-        { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true, ancho: 'half' },
-        { key: 'profesionalId', label: 'Profesional (UUID)', tipo: 'text', requerido: true, ancho: 'half' },
+        { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true, ancho: 'half', patron: UUID_RE, mensajeInvalido: UUID_MSG, ayuda: 'Pega el UUID del deportista desde un registro existente.' },
+        { key: 'profesionalId', label: 'Profesional (UUID)', tipo: 'text', requerido: true, ancho: 'half', patron: UUID_RE, mensajeInvalido: UUID_MSG, valorPorDefecto: sesionId ?? '', ayuda: 'Por defecto, tu propio usuario.' },
         { key: 'diagnostico', label: 'Diagnóstico', tipo: 'text', requerido: true },
         { key: 'rpe', label: 'RPE (0-10)', tipo: 'number', min: 0, max: 10, ancho: 'half' },
         { key: 'observaciones', label: 'Observaciones', tipo: 'textarea' },
@@ -87,7 +88,7 @@ export default function DeportistasPage() {
         activa: <StatusBadge tone={r.activa ? 'warning' : 'neutral'} label={r.activa ? 'Activa' : 'Inactiva'} />,
       })}
       campos={[
-        { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true, ancho: 'half' },
+        { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true, ancho: 'half', patron: UUID_RE, mensajeInvalido: UUID_MSG, ayuda: 'Pega el UUID del deportista desde un registro existente.' },
         { key: 'clinicalEvaluationId', label: 'Evaluación', tipo: 'select', requerido: true, opciones: (evaluaciones.datos ?? []).map((e) => ({ value: e.id, label: `${e.diagnostico} · ${fechaCorta(e.fechaEvaluacion)}` })) },
         { key: 'restrictionType', label: 'Tipo', tipo: 'select', requerido: true, opciones: RESTRICTION_TYPE, ancho: 'half' },
         { key: 'activa', label: 'Activa', tipo: 'select', opciones: SI_NO, ancho: 'half' },

@@ -20,6 +20,12 @@ export interface CampoDef {
   ayuda?: string
   /** Ancho: 'full' (por defecto) o 'half' para dos columnas. */
   ancho?: 'full' | 'half'
+  /** Validación de formato del valor (además de presencia). */
+  patron?: RegExp
+  /** Mensaje cuando `patron` no coincide. */
+  mensajeInvalido?: string
+  /** Valor inicial al CREAR (cuando no hay registro en edición). */
+  valorPorDefecto?: string
 }
 
 export type ValoresForm = Record<string, string>
@@ -39,7 +45,10 @@ export interface FormModalProps {
 
 function inicial(campos: CampoDef[], valorInicial?: ValoresForm): ValoresForm {
   const base: ValoresForm = {}
-  for (const campo of campos) base[campo.key] = valorInicial?.[campo.key] ?? ''
+  for (const campo of campos) {
+    // Al editar manda valorInicial; al crear, el valor por defecto del campo.
+    base[campo.key] = valorInicial?.[campo.key] ?? campo.valorPorDefecto ?? ''
+  }
   return base
 }
 
@@ -78,8 +87,11 @@ export function FormModal({
     e.preventDefault()
     const faltantes: Record<string, string> = {}
     for (const campo of campos) {
-      if (campo.requerido && !valores[campo.key]?.trim()) {
+      const valor = valores[campo.key]?.trim() ?? ''
+      if (campo.requerido && !valor) {
         faltantes[campo.key] = 'Este campo es obligatorio.'
+      } else if (valor && campo.patron && !campo.patron.test(valor)) {
+        faltantes[campo.key] = campo.mensajeInvalido ?? 'Formato inválido.'
       }
     }
     setErrores(faltantes)

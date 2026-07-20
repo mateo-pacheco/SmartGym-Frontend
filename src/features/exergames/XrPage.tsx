@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PageHeader } from '../../components/navigation/PageHeader'
 import { Tabs } from '../../components/navigation/Tabs'
 import { CrudSection } from '../../components/data-display/CrudSection'
+import { UUID_RE, UUID_MSG } from '../../lib/validaciones'
 import { DataTable } from '../../components/data-display/DataTable'
 import { NoContractState } from '../../components/feedback/NoContractState'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
@@ -255,7 +256,7 @@ function SesionesSeccion({ sesionId, estaciones, puedeRegistrar }: { sesionId: s
         onHide={() => setFormAbierto(false)}
         onSubmit={registrarSesion}
         campos={[
-          { key: 'usuarioId', label: 'Usuario (UUID)', tipo: 'text', requerido: true },
+          { key: 'usuarioId', label: 'Usuario (UUID)', tipo: 'text', requerido: true, patron: UUID_RE, mensajeInvalido: UUID_MSG, ayuda: 'Pega el UUID del usuario desde un registro existente.' },
           { key: 'estacionId', label: 'Estación', tipo: 'select', requerido: true, opciones: estaciones.map((e) => ({ value: e.id, label: e.nombre })) },
           { key: 'iniciadoEn', label: 'Inicio', tipo: 'datetime-local', requerido: true, ancho: 'half' },
           { key: 'duracionSegundos', label: 'Duración (s)', tipo: 'number', min: 0, ancho: 'half' },

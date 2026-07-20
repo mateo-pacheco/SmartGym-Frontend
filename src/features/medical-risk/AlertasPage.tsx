@@ -2,6 +2,7 @@ import { PageHeader } from '../../components/navigation/PageHeader'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { CrudSection } from '../../components/data-display/CrudSection'
 import { StatusBadge } from '../../components/data-display/StatusBadge'
+import { UUID_RE, UUID_MSG } from '../../lib/validaciones'
 import { useApiData } from '../../services/api/useApiData'
 import { useAuth } from '../../services/api/useAuth'
 import { riskAlerts } from '../../services/api/endpoints'
@@ -71,7 +72,7 @@ export default function AlertasPage() {
                 : <StatusBadge tone="success" label="Resuelta" icon="check" />,
             })}
             campos={[
-              { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true },
+              { key: 'deportistaId', label: 'Deportista (UUID)', tipo: 'text', requerido: true, patron: UUID_RE, mensajeInvalido: UUID_MSG, ayuda: 'Pega el UUID del deportista desde un registro existente.' },
               { key: 'tipoAlerta', label: 'Tipo de alerta', tipo: 'select', requerido: true, opciones: TIPO_RESTRICCION, ancho: 'half' },
               { key: 'nivelRiesgo', label: 'Nivel de riesgo', tipo: 'select', requerido: true, opciones: NIVEL_RIESGO, ancho: 'half' },
               { key: 'rpe', label: 'RPE (0-10)', tipo: 'number', min: 0, max: 10, ancho: 'half' },
