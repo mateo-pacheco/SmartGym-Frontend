@@ -1,7 +1,8 @@
 services:
 
   web:
-    image: lildavicho/smartgymfront:v1
+    # Debe coincidir con el tag que despliega Railway (servicio smartgymfront).
+    image: lildavicho/smartgymfront:v5
     ports:
       - "5173:80"
     environment:
