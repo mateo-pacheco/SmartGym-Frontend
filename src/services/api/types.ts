@@ -524,7 +524,7 @@ export interface RegistroFatigaRequestDTO {
 export interface RegistroFatigaResponseDTO {
   id: string
   usuarioId: string
-  /** Nivel de fatiga del usuario (0-100). */
+  /** Nivel de fatiga del usuario (1-10). */
   nivelFatiga: number
   recomendacion: string
   calculadoEn: string

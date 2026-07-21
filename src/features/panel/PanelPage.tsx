@@ -126,8 +126,8 @@ export default function PanelPage() {
                       <dt>Nivel de fatiga</dt>
                       <dd>
                         <StatusBadge
-                          tone={fatiga.nivelFatiga >= 70 ? 'danger' : fatiga.nivelFatiga >= 40 ? 'warning' : 'success'}
-                          label={`${fatiga.nivelFatiga}/100`}
+                          tone={fatiga.nivelFatiga >= 8 ? 'danger' : fatiga.nivelFatiga >= 5 ? 'warning' : 'success'}
+                          label={`${fatiga.nivelFatiga}/10`}
                         />
                       </dd>
                     </div>
