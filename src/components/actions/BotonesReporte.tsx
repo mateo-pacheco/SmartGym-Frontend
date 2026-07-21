@@ -1,12 +1,19 @@
 import { AppButton } from './AppButton'
 import { useMutation } from '../../services/api/useMutation'
+import { useAuth } from '../../services/api/useAuth'
+
+/* Roles con permiso de exportación. Los reportes vuelcan datos del ecosistema
+   (accesos, telemetría, alertas, planes de terceros), así que el rol
+   ESTUDIANTE queda fuera por mínimo privilegio. El backend debe aplicar el
+   mismo gate: ocultar el botón no autoriza nada por sí solo. */
+const ROLES_EXPORTACION = ['ADMINISTRADOR', 'MEDICO', 'ENTRENADOR'] as const
 
 export interface BotonesReporteProps {
   /** Descarga el reporte PDF del módulo (endpoint real del contrato). */
   pdf: () => Promise<void>
   /** Descarga el reporte Excel del módulo. */
   excel: () => Promise<void>
-  /** Si el rol de la sesión no puede exportar, no se renderiza nada. */
+  /** Restricción adicional del módulo; nunca amplía el permiso por rol. */
   permitido?: boolean
   /** Deshabilita mientras no haya datos o parámetros requeridos. */
   disabled?: boolean
@@ -18,8 +25,9 @@ export interface BotonesReporteProps {
 export function BotonesReporte({ pdf, excel, permitido = true, disabled = false }: BotonesReporteProps) {
   const descargaPdf = useMutation(pdf)
   const descargaExcel = useMutation(excel)
+  const { tieneRol } = useAuth()
 
-  if (!permitido) return null
+  if (!permitido || !tieneRol(...ROLES_EXPORTACION)) return null
 
   const ocupado = descargaPdf.enviando || descargaExcel.enviando
   const error = descargaPdf.error ?? descargaExcel.error
