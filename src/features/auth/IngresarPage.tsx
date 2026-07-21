@@ -360,20 +360,6 @@ export default function IngresarPage() {
           </AnimatePresence>
 
           <div className="ingresar__panel-footer">
-            <span className="ingresar__divider">o</span>
-
-            <AppButton
-              variant="secondary"
-              to="/panel"
-              iconEnd="flechaDerecha"
-              onClick={(event) => {
-                event.preventDefault()
-                enterPlatform('/panel')
-              }}
-            >
-              Explorar en modo desarrollo
-            </AppButton>
-
             <p className="ingresar__legal">Acceso institucional protegido y auditable.</p>
           </div>
         </form>

@@ -22,14 +22,12 @@ function renderIngresar() {
 }
 
 describe('IngresarPage', () => {
-  it('conserva la validación y el acceso al modo desarrollo', async () => {
+  it('conserva la validación y no ofrece atajos fuera del ingreso institucional', async () => {
     const user = userEvent.setup()
     renderIngresar()
 
-    expect(screen.getByRole('link', { name: /explorar en modo desarrollo/i })).toHaveAttribute(
-      'href',
-      '/panel',
-    )
+    // El acceso directo al panel («modo desarrollo») fue retirado del login.
+    expect(screen.queryByRole('link', { name: /explorar en modo desarrollo/i })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Ingresar' }))
     expect(screen.getByText(/correo institucional completo/i)).toBeInTheDocument()
@@ -51,10 +49,6 @@ describe('IngresarPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Recuperar contraseña' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /explorar en modo desarrollo/i })).toHaveAttribute(
-      'href',
-      '/panel',
-    )
 
     await user.click(screen.getByRole('button', { name: 'Enviar instrucciones' }))
     expect(screen.getByText(/correo institucional completo/i)).toBeInTheDocument()

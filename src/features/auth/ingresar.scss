@@ -17,7 +17,6 @@
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   padding: 22px clamp(16px, 5vw, 72px) 34px;
-  overflow: hidden;
 }
 
 .ingresar__form-col::before {
@@ -61,10 +60,19 @@
   flex-direction: column;
   gap: 15px;
   width: 100%;
+  min-width: 0;
 }
 
+/* Reserva de alto para que el panel no salte entre ingreso/recuperación.
+   En viewports bajos se libera: manda el contenido, no la reserva. */
 .ingresar__flow {
-  min-block-size: 390px;
+  min-block-size: 366px;
+}
+
+@media (max-height: 640px) {
+  .ingresar__flow {
+    min-block-size: 0;
+  }
 }
 
 .ingresar__flow--recovery {
@@ -152,9 +160,13 @@
   outline-offset: 2px;
 }
 
+/* La columna se acota a minmax(0,1fr): sin esto el ancho intrínseco del
+   input (icono + campo + botón «Mostrar») desborda en pantallas angostas. */
 .ingresar__field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 7px;
+  min-width: 0;
 }
 
 .ingresar__field > label {
@@ -166,6 +178,7 @@
 .ingresar__input {
   display: flex;
   align-items: center;
+  min-width: 0;
   min-height: 50px;
   padding-inline: 12px;
   border: 1.5px solid var(--sg-border-strong);
@@ -193,7 +206,8 @@
 }
 
 .ingresar__input > input {
-  flex: 1;
+  flex: 1 1 0;
+  width: 100%;
   min-width: 0;
   height: 48px;
   padding: 0 10px;
@@ -323,22 +337,6 @@
 .ingresar__confirmation-actions {
   display: grid;
   gap: 10px;
-}
-
-.ingresar__divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--sg-text-muted);
-  font-size: 0.76rem;
-}
-
-.ingresar__divider::before,
-.ingresar__divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--sg-border);
 }
 
 .ingresar__legal {
