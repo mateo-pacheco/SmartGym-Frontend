@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { SkipToContent } from '../../components/navigation/SkipToContent'
 import { MotionEffect } from '../../components/animate-ui/motion-effect'
 import { MobileNav } from './MobileNav'
+import { RutaAutorizada } from './RutaAutorizada'
 import { SideNav } from './SideNav'
 import { TopBar } from './TopBar'
 
@@ -27,7 +28,9 @@ export function AppShell() {
               fade
               transition={{ duration: 0.25, ease: 'easeOut' }}
             >
-              <Outlet />
+              {/* Punto único donde entra cualquier módulo: aquí se aplica el
+                  gate de rol antes de renderizar la vista. */}
+              <RutaAutorizada />
             </MotionEffect>
           </main>
         </div>
